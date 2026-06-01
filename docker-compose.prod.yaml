@@ -1,0 +1,17 @@
+services:
+  finguru:
+    build: .
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.guru.rule=Host(`gamezavod.com`) && PathPrefix(`/guru`)"
+      - "traefik.http.routers.guru.entrypoints=websecure"
+      - "traefik.http.routers.guru.tls.certresolver=letsencrypt"
+      - "traefik.http.services.guru-svc.loadbalancer.server.port=80"
+      - "traefik.docker.network=algogames-network"
+    networks:
+      - algogames-network
+
+networks:
+  algogames-network:
+    external: true
