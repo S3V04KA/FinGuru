@@ -43,16 +43,6 @@ const amountColors: Record<SectionColor, string> = {
   red: '#FF3B30',
 }
 
-function TotalCell({ label, amount, color }: { label: string; amount: number; color: SectionColor }) {
-  const c = amountColors[color]
-  return (
-    <div className={styles.totalCell}>
-      <span className={styles.totalLabel}>{label}</span>
-      <span className={styles.totalAmount} style={{ color: c }}>{formatCurrency(amount)}</span>
-    </div>
-  )
-}
-
 export default function RoleDetailsPage({ icon, roleName, financialData, onStartGame }: RoleDetailsPageProps) {
   const { income, expenses, assets, liabilities, monthlyCashFlow } = financialData
 
@@ -114,7 +104,7 @@ export default function RoleDetailsPage({ icon, roleName, financialData, onStart
           className={styles.totalCell}
           style={{ gridRow: `${endRow}` }}
         >
-          <span className={styles.totalLabel}>{section.totalLabel}</span>
+          <span className={styles.totalLabel} style={{ color: amountColors[section.color] }}>{section.totalLabel}</span>
           <span className={styles.totalAmount} style={{ color: amountColors[section.color] }}>
             {formatCurrency(section.total)}
           </span>
