@@ -1,0 +1,132 @@
+.card {
+  width: 292px;
+  font-family: 'Montserrat Alternates', sans-serif;
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Top Row ── */
+
+.topRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 15px;
+  color: #007AFF;
+}
+
+.sparkleBtn {
+  width: 16px;
+  height: 16px;
+  background: #007AFF;
+  border-radius: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.subtitleRow {
+  display: flex;
+  gap: 6px;
+}
+
+.subtitle {
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(60, 60, 67);
+}
+
+.salaryRow {
+  display: flex;
+  gap: 10px;
+}
+
+.salaryLabel {
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(60, 60, 67);
+}
+
+.salaryAmount {
+  font-weight: 600;
+  font-size: 12px;
+  color: #34C759;
+}
+
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.cashAmount {
+  font-weight: 600;
+  font-size: 15px;
+  color: #000;
+}
+
+.cashLabel {
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(60, 60, 67);
+  text-align: right;
+}
+
+/* ── Stats Row ── */
+
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.divider {
+  width: 1px;
+  height: 26px;
+  background: rgba(60, 60, 67, 0.12);
+  flex-shrink: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat:last-child {
+  align-items: flex-end;
+}
+
+.statLabel {
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(60, 60, 67);
+}
+
+.statValue {
+  font-weight: 600;
+  font-size: 13px;
+}

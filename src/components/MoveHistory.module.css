@@ -1,0 +1,209 @@
+.container {
+  width: 288px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-family: 'Montserrat Alternates', sans-serif;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 15px;
+  color: rgb(60, 60, 67);
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.playerRow {
+  display: flex;
+  flex-direction: row;
+  gap: 83px;
+  align-items: center;
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playerName {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.moveMeta {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.moveLabel,
+.moveTime {
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(174, 174, 178);
+}
+
+.transactionHeader {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.transactionType {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.transactionAction {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.finances {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.financeRow {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.financeLabel {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(60, 60, 67);
+}
+
+.financeValues {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.financeChange {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.financeEquals {
+  font-weight: 500;
+  font-size: 15px;
+  color: rgb(0, 0, 0);
+}
+
+.financeResult {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.dealCard {
+  background: rgb(75, 145, 0);
+  border-radius: 16px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dealHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.dealHeaderText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dealTitle {
+  font-weight: 600;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+  margin: 0;
+}
+
+.dealArrow {
+  font-size: 10px;
+  color: rgb(255, 255, 255);
+  flex-shrink: 0;
+  margin-top: 4px;
+  transition: transform 0.2s;
+}
+
+.dealArrowUp {
+  transform: rotate(180deg);
+}
+
+.dealDescription {
+  font-weight: 400;
+  font-size: 11px;
+  color: rgb(255, 255, 255);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.dealPriceRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dealPriceLabel {
+  font-weight: 600;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+}
+
+.dealPriceValue {
+  font-weight: 600;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+}
+
+.divider {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 0;
+}
+
+.divider::after {
+  content: '';
+  height: 0;
+  border-top: 1px solid rgb(229, 229, 234);
+}

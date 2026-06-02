@@ -1,0 +1,355 @@
+.container {
+  width: 340px;
+  background: rgb(255, 255, 255);
+  border-radius: 24px;
+  padding: 16px 8px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+  font-family: 'Montserrat Alternates', sans-serif;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.playerInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.playerNameRow {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.playerName {
+  font-weight: 700;
+  font-size: 20px;
+  color: rgb(255, 204, 0);
+  margin: 0;
+}
+
+.sparkle {
+  width: 24px;
+  height: 24px;
+  background: rgb(255, 204, 0);
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.playerMeta {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.playerRole,
+.moveNumber {
+  font-weight: 500;
+  font-size: 15px;
+  color: rgb(60, 60, 67);
+}
+
+.avatar {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.avatarCircle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgb(209, 209, 214);
+  box-sizing: border-box;
+}
+
+.avatarRing {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 4px solid rgb(255, 149, 0);
+  box-sizing: border-box;
+}
+
+.statsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.miniCards {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+}
+
+.miniCard {
+  flex: 1;
+  background: rgb(244, 244, 245);
+  border-radius: 16px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.miniLabel {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(60, 60, 67);
+}
+
+.miniAmount {
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.largeCards {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+.largeCard {
+  flex: 1;
+  border-radius: 16px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.largeLabel {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+}
+
+.largeAmount {
+  font-weight: 600;
+  font-size: 17px;
+  color: rgb(255, 255, 255);
+}
+
+.goalSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 4px;
+}
+
+.goalLabel {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(174, 174, 178);
+  padding-left: 12px;
+}
+
+.goalBadge {
+  background: rgb(120, 120, 128);
+  border-radius: 16px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.goalAmount {
+  font-weight: 700;
+  font-size: 20px;
+  color: rgb(0, 0, 0);
+}
+
+.goalPill {
+  background: rgb(119, 118, 220);
+  border-radius: 16px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.goalPillText {
+  font-weight: 700;
+  font-size: 20px;
+  color: rgb(255, 204, 0);
+}
+
+.statusSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 4px;
+}
+
+.statusChip {
+  border-radius: 16px;
+  padding: 4px 12px;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.statusLabel {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+}
+
+.statusDescription {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(255, 255, 255);
+}
+
+.assetsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 4px;
+}
+
+.assetCard {
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.assetHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 4px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  color: rgb(0, 0, 0);
+}
+
+.assetHeaderRow {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.assetTitle {
+  font-weight: 600;
+  font-size: 17px;
+  color: rgb(0, 0, 0);
+}
+
+.assetCount {
+  font-weight: 500;
+  font-size: 13px;
+  color: rgb(0, 0, 0);
+}
+
+.assetValue {
+  font-weight: 600;
+  font-size: 13px;
+  color: rgb(52, 199, 89);
+  margin-left: auto;
+}
+
+.assetArrow {
+  font-size: 10px;
+  color: rgb(0, 0, 0);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.assetArrowUp {
+  transform: rotate(180deg);
+}
+
+.assetGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0 10px 0;
+}
+
+.assetGridHeader {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  margin-bottom: 4px;
+}
+
+.assetGridRow {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.assetGridLabel {
+  width: 80px;
+  flex-shrink: 0;
+  padding: 4px 5px 6px 5px;
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(60, 60, 67);
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.assetGridItem {
+  flex: 1;
+  padding: 4px 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(60, 60, 67);
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assetGridValue {
+  flex: 1;
+  padding: 4px 0;
+  font-weight: 500;
+  font-size: 12px;
+  color: rgb(0, 0, 0);
+  text-align: center;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
