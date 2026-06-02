@@ -1,4 +1,5 @@
 import ProgressBar from './ProgressBar'
+import { formatCurrency } from '../utils/format'
 import styles from './PlayerCard.module.css'
 
 interface PlayerCardProps {
@@ -12,11 +13,6 @@ interface PlayerCardProps {
   passiveIncome: number
   cashFlow: number
   expenses: number
-}
-
-function formatCurrency(amount: number): string {
-  const sign = amount < 0 ? '– ' : ''
-  return `${sign}${Math.abs(amount).toLocaleString('ru-RU')} ₽`
 }
 
 export default function PlayerCard({

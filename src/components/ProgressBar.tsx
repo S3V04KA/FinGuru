@@ -1,13 +1,9 @@
+import { formatCurrency } from '../utils/format'
 import styles from './ProgressBar.module.css'
 
 interface ProgressBarProps {
   goalAmount: number
   progressAmount: number
-}
-
-function formatCurrency(amount: number): string {
-  const sign = amount < 0 ? '– ' : ''
-  return `${sign}${Math.abs(amount).toLocaleString('ru-RU')} ₽`
 }
 
 export default function ProgressBar({ goalAmount, progressAmount }: ProgressBarProps) {

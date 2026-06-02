@@ -1,5 +1,6 @@
 .container {
-  width: 340px;
+  width: 100%;
+  max-width: 100%;
   background: rgb(255, 255, 255);
   border-radius: 24px;
   padding: 16px 8px 8px 4px;
@@ -7,6 +8,71 @@
   flex-direction: column;
   gap: 19px;
   font-family: 'Montserrat Alternates', sans-serif;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (max-width: 480px) {
+  .container {
+    border-radius: 16px;
+    padding: 12px 4px 8px 4px;
+    gap: 14px;
+  }
+
+  .miniCard {
+    padding: 6px 8px;
+  }
+
+  .miniLabel {
+    font-size: 11px;
+  }
+
+  .miniAmount {
+    font-size: 14px;
+  }
+
+  .largeCard {
+    padding: 6px 8px;
+  }
+
+  .largeLabel {
+    font-size: 11px;
+  }
+
+  .largeAmount {
+    font-size: 14px;
+  }
+
+  .assetTitle {
+    font-size: 14px;
+  }
+
+  .assetGridLabel {
+    width: 60px;
+    font-size: 10px;
+    min-height: 32px;
+  }
+
+  .assetGridItem,
+  .assetGridValue {
+    font-size: 10px;
+    min-height: 32px;
+  }
+
+  .statusChip {
+    padding: 3px 8px;
+  }
+
+  .statusLabel,
+  .statusDescription {
+    font-size: 11px;
+  }
+}
+
+.container *,
+.container *::before,
+.container *::after {
+  box-sizing: border-box;
 }
 
 .header {
@@ -15,51 +81,6 @@
   gap: 12px;
   align-items: center;
   padding: 0 16px;
-}
-
-.playerInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.playerNameRow {
-  display: flex;
-  flex-direction: row;
-  gap: 6px;
-  align-items: center;
-}
-
-.playerName {
-  font-weight: 700;
-  font-size: 20px;
-  color: rgb(255, 204, 0);
-  margin: 0;
-}
-
-.sparkle {
-  width: 24px;
-  height: 24px;
-  background: rgb(255, 204, 0);
-  border-radius: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.playerMeta {
-  display: flex;
-  flex-direction: row;
-  gap: 0;
-}
-
-.playerRole,
-.moveNumber {
-  font-weight: 500;
-  font-size: 15px;
-  color: rgb(60, 60, 67);
 }
 
 .avatar {

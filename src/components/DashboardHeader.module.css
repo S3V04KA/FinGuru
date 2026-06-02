@@ -1,0 +1,53 @@
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-family: 'Montserrat Alternates', sans-serif;
+}
+
+.info *,
+.info *::before,
+.info *::after {
+  box-sizing: border-box;
+}
+
+.playerNameRow {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+}
+
+.playerName {
+  font-weight: 700;
+  font-size: 20px;
+  color: rgb(255, 204, 0);
+  margin: 0;
+}
+
+.sparkle {
+  width: 24px;
+  height: 24px;
+  background: rgb(255, 204, 0);
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.playerMeta {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+}
+
+.playerRole,
+.separator,
+.moveNumber {
+  font-weight: 500;
+  font-size: 15px;
+  color: rgb(60, 60, 67);
+}

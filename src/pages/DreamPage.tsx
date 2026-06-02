@@ -1,3 +1,4 @@
+import { formatCurrency } from '../utils/format'
 import styles from './DreamPage.module.css'
 
 export type DreamCardStatus = 'default' | 'selected' | 'chosen' | 'hover'
@@ -19,10 +20,6 @@ interface DreamPageProps {
   dreams: DreamItem[]
   onStartGame?: () => void
   onDreamSelect?: (dreamId: number) => void
-}
-
-function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('ru-RU')} ₽`
 }
 
 const cardBgColors: Record<DreamCardStatus, string> = {

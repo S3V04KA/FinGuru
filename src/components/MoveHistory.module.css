@@ -1,9 +1,16 @@
 .container {
-  width: 288px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 16px;
   font-family: 'Montserrat Alternates', sans-serif;
+  box-sizing: border-box;
+}
+
+.container *,
+.container *::before,
+.container *::after {
+  box-sizing: border-box;
 }
 
 .title {
@@ -28,8 +35,9 @@
 .playerRow {
   display: flex;
   flex-direction: row;
-  gap: 83px;
+  justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .playerInfo {
@@ -100,11 +108,13 @@
   flex-direction: row;
   gap: 6px;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .financeChange {
   font-weight: 500;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .financeEquals {
@@ -116,6 +126,7 @@
 .financeResult {
   font-weight: 600;
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .dealCard {

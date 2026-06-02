@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { formatCurrency } from '../utils/format'
 import styles from './Popover.module.css'
 
 export type PopoverRow =
@@ -8,10 +9,6 @@ export type PopoverRow =
 interface PopoverProps {
   rows: PopoverRow[]
   isOpen?: boolean
-}
-
-function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('ru-RU')} ₽`
 }
 
 const gapAfter: Record<number, number> = {

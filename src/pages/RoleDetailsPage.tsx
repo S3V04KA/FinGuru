@@ -1,4 +1,5 @@
 import { type ReactNode } from 'react'
+import { formatCurrency } from '../utils/format'
 import styles from './RoleDetailsPage.module.css'
 
 export interface FinancialItem {
@@ -25,10 +26,6 @@ interface RoleDetailsPageProps {
   roleName: string
   financialData: RoleFinancialData
   onStartGame: () => void
-}
-
-function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('ru-RU')} ₽`
 }
 
 type SectionColor = 'green' | 'red'

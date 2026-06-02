@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import styles from './Dashboard.module.css'
 import ProgressBar from './ProgressBar'
+import DashboardHeader from './DashboardHeader'
+import { formatCurrency } from '../utils/format'
 
 export interface DashboardStats {
   cash: number
@@ -37,10 +39,6 @@ export interface DashboardProps {
   progressAmount: number
   statuses: DashboardStatus[]
   assetCategories: AssetCategory[]
-}
-
-function formatCurrency(amount: number): string {
-  return `${amount.toLocaleString('ru-RU')} ₽`
 }
 
 function MiniCard({ label, amount, amountColor }: { label: string; amount: string; amountColor: string }) {
@@ -104,21 +102,11 @@ export default function Dashboard({
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <div className={styles.playerInfo}>
-          <div className={styles.playerNameRow}>
-            <h1 className={styles.playerName}>{playerName}</h1>
-            <div className={styles.sparkle}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M8 0L9.8 5.5L15 8L9.8 10.5L8 16L6.2 10.5L1 8L6.2 5.5L8 0Z" fill="white"/>
-              </svg>
-            </div>
-          </div>
-          <div className={styles.playerMeta}>
-            <span className={styles.playerRole}>{playerRole}</span>
-            <span className={styles.moveNumber}>, </span>
-            <span className={styles.moveNumber}>Ход {moveNumber}</span>
-          </div>
-        </div>
+        <DashboardHeader
+          playerName={playerName}
+          playerRole={playerRole}
+          moveNumber={moveNumber}
+        />
         <div className={styles.avatar}>
           <div className={styles.avatarCircle} />
           <div className={styles.avatarRing} />
