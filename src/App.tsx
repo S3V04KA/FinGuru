@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { GameProvider } from './context/GameContext'
 import { Routes, Route, useNavigate, useParams } from 'react-router-dom'
 import RoleCardPage from './pages/RoleCardPage'
 import RoleDetailsPage from './pages/RoleDetailsPage'
@@ -21,11 +22,14 @@ function RoleDetailsPageRoute() {
 }
 
 function App() {
+  // Wrap the whole application with the GameProvider to expose global state
+
   const navigate = useNavigate()
   const [selectedRole, setSelectedRole] = useState<RoleKey>('policeOfficer')
 
   return (
-    <Routes>
+    <GameProvider>
+      <Routes>
       <Route path="/role/:roleName" element={<RoleCardPage onTimeout={() => navigate('/')} />} />
       <Route path="/role/:roleName/details" element={<RoleDetailsPageRoute />} />
       <Route path="*" element={
@@ -55,7 +59,8 @@ function App() {
           </footer>
         </>
       } />
-    </Routes>
+      </Routes>
+    </GameProvider>
   )
 }
 

@@ -150,30 +150,7 @@ function InnerBoundaryHighlight({ index }: { index: number }) {
   return (
     <path
       d={sectorPath(highlightAngle, highlightEnd, INNER_SECTOR_RADIUS)}
-      fill="rgba(255, 255, 255, 0.35)"
-    />
-  )
-}
-
-function OuterBoundaryShadow({ index }: { index: number }) {
-  const boundaryAngle = (index + 1) * BIG_SECTOR_ANGLE
-  const shadowStart = boundaryAngle - 0.5
-  const shadowEnd = boundaryAngle
-  return (
-    <path
-      d={sectorRingPath(shadowStart, shadowEnd, RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
-      fill="rgba(0, 0, 0, 0.45)"
-    />
-  )
-}
-
-function OuterBoundaryHighlight({ index }: { index: number }) {
-  const highlightAngle = index * BIG_SECTOR_ANGLE
-  const highlightEnd = highlightAngle + 0.5
-  return (
-    <path
-      d={sectorRingPath(highlightAngle, highlightEnd, RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
-      fill="rgba(255, 255, 255, 0.35)"
+      fill={"rgba(255, 255, 255, 0.35)"}
     />
   )
 }
@@ -314,14 +291,14 @@ export default function GameBoard({
                 <stop offset="100%" stopColor="white" stopOpacity="0" />
               </radialGradient>
               <radialGradient id="innerRevShadowGrad" cx="50%" cy="50%" r="100%">
-                <stop offset="36%" stopColor="rgba(0,0,0,0.20)" />
-                <stop offset="50%" stopColor="rgba(0,0,0,0.35)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0.70)" />
+                <stop offset="36%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.20)"} />
+                <stop offset="50%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)"} />
+                <stop offset="100%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.70)" : "rgba(0,0,0,0.70)"} />
               </radialGradient>
               <radialGradient id="innerShadowGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="36%" stopColor="rgba(0,0,0,0.70)" />
-                <stop offset="50%" stopColor="rgba(0,0,0,0.35)" />
-                <stop offset="100%" stopColor="rgba(0,0,0,0.20)" />
+                <stop offset="36%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.70)" : "rgba(0,0,0,0.70)"} />
+                <stop offset="50%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)"} />
+                <stop offset="100%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.20)"} />
               </radialGradient>
 
             </defs>
