@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import styles from './GameBoard.module.css'
 import centerImage from '../assets/GameBoard.png'
 import { sectors, bigSectors, SECTOR_COUNT } from '../data/gameBoard'
-import TopBar, { type TopBarPlayers } from './TopBar'
+import TopBar, { type TopBarDreams, type TopBarPlayers } from './TopBar'
 
 const SECTOR_ANGLE = 360 / SECTOR_COUNT
 const BIG_SECTOR_COUNT = 48
@@ -27,9 +27,16 @@ export interface PlayerMarker {
   name?: string
 }
 
+export interface DreamMarker {
+  cellIndex: number
+  playerName: string
+  color?: string
+}
+
 interface GameBoardProps {
   players?: PlayerMarker[]
   bigSectorPlayers?: PlayerMarker[]
+  bigSectorDreams?: DreamMarker[]
   currentPlayerId?: string
   activeTab?: 'small' | 'big'
   onTabChange?: (tab: 'small' | 'big') => void
@@ -159,12 +166,14 @@ function InnerBoundaryHighlight({ index }: { index: number }) {
 export default function GameBoard({
   players = [],
   bigSectorPlayers = [],
+  bigSectorDreams = [],
   currentPlayerId,
   activeTab = 'small',
   onTabChange,
   onRollDice,
 }: GameBoardProps) {
   const [internalTab, setInternalTab] = useState<'small' | 'big'>('small')
+  const [activeIndex, setActiveIndex] = useState(5)
   const tab = onTabChange ? activeTab : internalTab
   const handleTabChange = (t: 'small' | 'big') => {
     if (onTabChange) onTabChange(t)
@@ -246,6 +255,31 @@ export default function GameBoard({
   const innerPlayerMarkers = renderPlayerMarkers(players, (RING_INNER + RING_OUTER) / 2, SECTOR_ANGLE)
   const outerPlayerMarkers = renderPlayerMarkers(bigSectorPlayers, OUTER_MARKER_R, BIG_SECTOR_ANGLE, tab === 'big' ? 2.5 : 1)
 
+  const outerDreamMarkers = useMemo<ReactNode[]>(() => {
+    const markerScale = tab === 'big' ? 2.5 : 1
+    const r = 11 * markerScale
+    const stroke = 3 * markerScale
+    return bigSectorDreams
+      .filter((d) => d.cellIndex >= 0)
+      .map((dream) => {
+        const angle = dream.cellIndex * BIG_SECTOR_ANGLE + BIG_SECTOR_ANGLE / 2
+        const [mx, my] = polarToCartesian(CX, CY, OUTER_MARKER_R, angle)
+        const color = dream.color ?? '#30B0C7'
+        return (
+          <g key={`dream-${dream.cellIndex}`}>
+            <circle
+              cx={mx}
+              cy={my}
+              r={r}
+              fill="white"
+              stroke={color}
+              strokeWidth={stroke}
+            />
+          </g>
+        )
+      })
+  }, [bigSectorDreams, tab])
+
   const topBarSectors = useMemo(
     () => Array.from({ length: BIG_SECTOR_COUNT }, (_, i) => bigSectors[i % bigSectors.length]),
     [],
@@ -262,6 +296,52 @@ export default function GameBoard({
     }
     return result
   }, [bigSectorPlayers])
+
+  const topBarDreams = useMemo<TopBarDreams>(() => {
+    const result: TopBarDreams = {}
+    for (const dream of bigSectorDreams) {
+      if (dream.cellIndex < 0) continue
+      result[dream.cellIndex] = {
+        playerName: dream.playerName,
+        color: dream.color,
+      }
+    }
+    return result
+  }, [bigSectorDreams])
+
+  const highlightStart = (activeIndex - 2 + BIG_SECTOR_COUNT) % BIG_SECTOR_COUNT
+  const highlightEnd = (activeIndex + 2) % BIG_SECTOR_COUNT
+  const isInHighlight = (i: number): boolean =>
+    highlightStart <= highlightEnd
+      ? i >= highlightStart && i <= highlightEnd
+      : i >= highlightStart || i <= highlightEnd
+  const outerDarkenElements: ReactNode[] = []
+  const outerHighlightBorders: ReactNode[] = []
+  if (tab === 'big') {
+    for (let i = 0; i < BIG_SECTOR_COUNT; i++) {
+      const startAngle = i * BIG_SECTOR_ANGLE
+      const endAngle = (i + 1) * BIG_SECTOR_ANGLE
+      if (isInHighlight(i)) {
+        outerHighlightBorders.push(
+          <path
+            key={`outer-highlight-${i}`}
+            d={sectorRingPath(startAngle, endAngle, RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
+            fill="none"
+            stroke="white"
+            strokeWidth={4}
+          />,
+        )
+      } else {
+        outerDarkenElements.push(
+          <path
+            key={`outer-darken-${i}`}
+            d={sectorRingPath(startAngle, endAngle, RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
+            fill="rgba(0, 0, 0, 0.3)"
+          />,
+        )
+      }
+    }
+  }
 
   return (
     <div className={styles.container}>
@@ -283,7 +363,7 @@ export default function GameBoard({
         </div>
 
         <div className={`${styles.topBarWrapper} ${tab === 'big' ? styles.topBarWrapperVisible : ''}`}>
-          <TopBar sectors={topBarSectors} players={topBarPlayers} />
+          <TopBar sectors={topBarSectors} players={topBarPlayers} dreams={topBarDreams} onActiveIndexChange={setActiveIndex} />
         </div>
 
         <div className={styles.wheelWrapper} style={{transform: (internalTab === 'big' ? 'translateY(13%)' : '')}}>
@@ -362,14 +442,14 @@ export default function GameBoard({
                 d={ringPath(RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
                 fill="url(#outerFadeGrad)"
               />
-              <path
-                d={ringPath(RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
-                fill="url(#innerShadowGrad)"
-              />
-              <path
-                d={ringPath(RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
-                fill="url(#innerRevShadowGrad)"
-              />
+              {tab === 'small' && (
+                <path
+                  d={ringPath(RING_OUTER, OUTER_SECTOR_RADIUS_FULL)}
+                  fill="rgba(255, 255, 255, 0.2)"
+                />
+              )}
+              {outerDarkenElements}
+              {outerHighlightBorders}
 
               <path
                 d={ringPath(RING_INNER, RING_OUTER)}
@@ -413,6 +493,7 @@ export default function GameBoard({
               />
 
               {outerPlayerMarkers}
+              {outerDreamMarkers}
             </g>
           </svg>
         </div>

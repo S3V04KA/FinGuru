@@ -25,7 +25,12 @@ export const Default: Story = {
       { id: 'o3', color: '#34C759', letter: 'C', cellIndex: 24 },
       { id: 'o4', color: '#AF52DE', letter: 'D', cellIndex: 36 },
     ],
+    bigSectorDreams: [
+      { cellIndex: 4, playerName: 'Машина', color: '#FF3B30' },
+      { cellIndex: 20, playerName: 'Квартира', color: '#007AFF' },
+      { cellIndex: 32, playerName: 'Путешествие', color: '#34C759' },
+    ],
     currentPlayerId: 'p3',
-    activeTab: 'small',
+    activeTab: 'big',
   },
 }
