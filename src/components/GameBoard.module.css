@@ -56,6 +56,25 @@
   flex-shrink: 0;
 }
 
+.topBarWrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  margin-top: 12px;
+  flex-shrink: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: max-height 0.35s ease, opacity 0.3s ease;
+}
+
+.topBarWrapperVisible {
+  max-height: 400px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .tab {
   border: none;
   border-radius: 12px;

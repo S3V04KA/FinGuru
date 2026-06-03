@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import styles from './GameBoard.module.css'
 import centerImage from '../assets/GameBoard.png'
 import { sectors, bigSectors, SECTOR_COUNT } from '../data/gameBoard'
+import TopBar from './TopBar'
 
 const SECTOR_ANGLE = 360 / SECTOR_COUNT
 const BIG_SECTOR_COUNT = 48
@@ -262,6 +263,10 @@ export default function GameBoard({
           >
             Большой круг
           </button>
+        </div>
+
+        <div className={`${styles.topBarWrapper} ${tab === 'big' ? styles.topBarWrapperVisible : ''}`}>
+          <TopBar />
         </div>
 
         <div className={styles.wheelWrapper} style={{transform: (internalTab === 'big' ? 'translateY(13%)' : '')}}>
