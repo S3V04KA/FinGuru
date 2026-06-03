@@ -96,7 +96,7 @@ function Sector({ index, outer }: { index: number; outer?: boolean }) {
     <g>
       <path
         d={outer ? sectorRingPath(startAngle, endAngle, innerR, outerR) : sectorPath(startAngle, endAngle, outerR)}
-        fill={color}
+        fill={!outer ? color : `url(#outer-grad-${color})`}
       />
       {!outer && (
         <foreignObject
@@ -301,6 +301,22 @@ export default function GameBoard({
                 <stop offset="100%" stopColor={internalTab === 'small' ? "rgba(255,255,255,0.20)" : "rgba(0,0,0,0.20)"} />
               </radialGradient>
 
+              <linearGradient id='outer-grad-green' x1='0%' y1='0%' x2='100%' y2='100%'>
+                <stop offset='0%' stopColor='#40D451' />
+                <stop offset='100%' stopColor='#39A7DB' />
+              </linearGradient>
+              <linearGradient id='outer-grad-orange' x1='0%' y1='0%' x2='100%' y2='100%'>
+                <stop offset='0%' stopColor='#FFF71A' />
+                <stop offset='100%' stopColor='#F6332C' />
+              </linearGradient>
+              <linearGradient id='outer-grad-red' x1='0%' y1='0%' x2='100%' y2='100%'>
+                <stop offset='0%' stopColor='#F06060' />
+                <stop offset='100%' stopColor='#F34F4F' />
+              </linearGradient>
+              <linearGradient id='outer-grad-purple' x1='0%' y1='0%' x2='100%' y2='100%'>
+                <stop offset='0%' stopColor='#E85CEB' />
+                <stop offset='100%' stopColor='#846ED4' />
+              </linearGradient>
             </defs>
 
             <g

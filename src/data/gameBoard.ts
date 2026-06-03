@@ -12,6 +12,13 @@ export const SECTOR_COLORS = {
   negative: '#606060'
 } as const
 
+export const OUTER_SECTOR_COLORS = {
+  green: 'green',
+  orange: 'orange',
+  red: 'red',
+  purple: 'purple',
+} as const
+
 export const sectors: SectorConfig[] = [
   {label: 'Всячина', color: SECTOR_COLORS.other},
   {label: 'Крупная/Мелкая Сделка', color: SECTOR_COLORS.deal},
@@ -41,30 +48,30 @@ export const sectors: SectorConfig[] = [
 ]
 
 export const bigSectors: SectorConfig[] = [
-  {label: 'Штраф', color: SECTOR_COLORS.other},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Свадьба', color: SECTOR_COLORS.event},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Повышение', color: SECTOR_COLORS.salary},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Производство', color: SECTOR_COLORS.shop},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Авария', color: SECTOR_COLORS.other},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Банкротство', color: SECTOR_COLORS.negative},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Инвестиции', color: SECTOR_COLORS.salary},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Производство', color: SECTOR_COLORS.shop},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Налог', color: SECTOR_COLORS.other},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Благотв. Фонд', color: SECTOR_COLORS.other},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Премия', color: SECTOR_COLORS.salary},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
-  {label: 'Сырьё', color: SECTOR_COLORS.shop},
-  {label: 'Гос. Заказ', color: SECTOR_COLORS.deal},
+  {label: 'Штраф', color: OUTER_SECTOR_COLORS.green},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.orange},
+  {label: 'Свадьба', color: OUTER_SECTOR_COLORS.red},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Повышение', color: OUTER_SECTOR_COLORS.green},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Производство', color: OUTER_SECTOR_COLORS.orange},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Авария', color: OUTER_SECTOR_COLORS.red},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Банкротство', color: OUTER_SECTOR_COLORS.red},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Инвестиции', color: OUTER_SECTOR_COLORS.green},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Производство', color: OUTER_SECTOR_COLORS.orange},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Налог', color: OUTER_SECTOR_COLORS.red},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Благотв. Фонд', color: OUTER_SECTOR_COLORS.red},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Премия', color: OUTER_SECTOR_COLORS.green},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
+  {label: 'Сырьё', color: OUTER_SECTOR_COLORS.orange},
+  {label: 'Гос. Заказ', color: OUTER_SECTOR_COLORS.purple},
 ]
 
 export const SECTOR_COUNT = 24
