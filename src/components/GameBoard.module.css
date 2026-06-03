@@ -38,6 +38,8 @@
   align-items: center;
   justify-content: center;
   overflow: clip;
+  transform: translateY(0);
+  transition: transform 0.25s ease;
 }
 
 .tabs {

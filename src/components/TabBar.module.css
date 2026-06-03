@@ -1,0 +1,74 @@
+@font-face {
+  font-family: "SF Pro"; /* set name */
+  src: url(/src/assets/SF-Pro.ttf); /* url of the font */
+}
+
+@media (min-width: 1024px) {
+  .container {
+    display: none;
+  }
+}
+
+.container {
+  display: flex;
+  width: 430px;
+  padding: 16px 24px 25px 24px;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: #FFFFFF;
+  border-radius: 100px;
+}
+
+.tabs {
+  position: relative;
+  display: flex;
+  padding: 0 2px;
+  justify-content: center;
+  align-items: flex-start;
+  gap: -8px;
+  flex: 1 0 0;
+  overflow: hidden;
+}
+
+.tabs span {
+  position: absolute;
+  width: 73px;
+  height: 54px;
+  background-color: #DDDDDD;
+  top: 1px;
+  bottom: 0px;
+  left: 8px;
+  border-radius: 50px;
+  z-index: 1;
+  transition: 0.3s ease left;
+}
+
+.tab {
+  display: flex;
+  padding: 6px 8px 7px 8px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5px;
+  flex: 1 0 0;
+  color: rgba(127, 127, 127, 1);
+  text-align: center;
+  font-feature-settings: 'liga' off, 'clig' off;
+  font-family: "Montserrat Alternates";
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.icon {
+  text-align: center;
+  font-feature-settings: 'ss16' on, 'liga' off, 'clig' off;
+  font-family: "SF Pro";
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 590;
+  line-height: 28px;
+}

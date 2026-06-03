@@ -264,7 +264,7 @@ export default function GameBoard({
           </button>
         </div>
 
-        <div className={styles.wheelWrapper}>
+        <div className={styles.wheelWrapper} style={{transform: (internalTab === 'big' ? 'translateY(13%)' : '')}}>
           <svg viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`} className={styles.wheelSvg}>
             <defs>
               <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
