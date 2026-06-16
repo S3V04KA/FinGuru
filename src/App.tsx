@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { GameProvider } from './context/GameContext'
+import { GameProvider, useGame } from './context/GameContext'
 import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom'
 import RoleCardPage from './pages/RoleCardPage'
 import RoleDetailsPage from './pages/RoleDetailsPage'
@@ -26,19 +26,28 @@ function DreamPageRoute() {
   const navigate = useNavigate()
   const { roleName } = useParams<{ roleName: string }>()
   const data = roleName ? roleData[roleName] : undefined
+  const { players, currentPlayerId } = useGame()
   const [dreams, setDreams] = useState<DreamItem[]>(() =>
     defaultDreams.map(d => ({ ...d, status: 'default' as const }))
   )
 
+  const currentPlayer = players.find(p => p.id === currentPlayerId)
+
   const handleDreamSelect = useCallback((dreamId: number) => {
     setDreams(prev => prev.map(d => {
       if (d.id === dreamId) {
-        const newStatus: DreamItem['status'] = d.status === 'selected' ? 'default' : 'selected'
-        return { ...d, status: newStatus }
+        const isDeselecting = d.status === 'selected'
+        const newStatus: DreamItem['status'] = isDeselecting ? 'default' : 'selected'
+        return {
+          ...d,
+          status: newStatus,
+          playerName: isDeselecting ? undefined : (currentPlayer?.name ?? 'Игрок'),
+          color: isDeselecting ? undefined : currentPlayer?.color,
+        }
       }
       return d
     }))
-  }, [])
+  }, [currentPlayer])
 
   if (!data) return <p>Роль не найдена</p>
   return <DreamPage

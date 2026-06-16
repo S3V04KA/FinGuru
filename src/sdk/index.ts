@@ -34,3 +34,37 @@ export async function getPlayerRole(sdk: AlgoGamesSDK, roomId: string, playerId:
     sdk.sendAction('finguru.getRole', { roomId, playerId });
   });
 }
+
+export interface DreamServerState {
+  id: number
+  chosenByPlayerId: string | null
+}
+
+export interface DreamSelectionUpdate {
+  dreamId: number
+  selectedBy: string
+  dreams: DreamServerState[]
+  playerColors: Record<string, string>
+  playerNames: Record<string, string>
+}
+
+export function subscribeDreamSelection(
+  sdk: AlgoGamesSDK,
+  roomId: string,
+  _playerId: string,
+  onUpdate: (update: DreamSelectionUpdate) => void
+): () => void {
+  const handler = (msg: { type: string; data: any }) => {
+    if (msg.type === 'finguru.dreamSelected' && msg.data?.roomId === roomId) {
+      onUpdate({
+        dreamId: msg.data.dreamId,
+        selectedBy: msg.data.selectedBy,
+        dreams: msg.data.dreams,
+        playerColors: msg.data.playerColors ?? {},
+        playerNames: msg.data.playerNames ?? {},
+      });
+    }
+  };
+  sdk.onReceiveMessage(handler);
+  return () => sdk.onReceiveMessage(() => {});
+}

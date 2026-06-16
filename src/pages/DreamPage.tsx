@@ -10,6 +10,7 @@ export interface DreamItem {
   description: string
   price: number
   playerName?: string
+  color?: string
   status?: DreamCardStatus
 }
 
@@ -37,8 +38,9 @@ const cardBorderColors: Record<DreamCardStatus, string | undefined> = {
 }
 
 function DreamCard({ item, onSelect }: { item: DreamItem; onSelect?: (id: number) => void }) {
-  const status = item.playerName ? (item.status ?? 'default') : 'default'
-  const bg = cardBgColors[status]
+  const status = item.status ?? 'default'
+  const isHighlighted = status === 'selected' || status === 'chosen'
+  const bg = isHighlighted && item.color ? item.color : cardBgColors[status]
   const borderColor = cardBorderColors[status]
 
   const statusClass = status !== 'default' ? styles[`card${status.charAt(0).toUpperCase()}${status.slice(1)}` as keyof typeof styles] : undefined
