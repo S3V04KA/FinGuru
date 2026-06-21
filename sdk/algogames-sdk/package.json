@@ -1,0 +1,23 @@
+{
+  "name": "algogames-sdk",
+  "version": "1.0.0",
+  "description": "AlgoGames SDK - TypeScript bridge for game-platform communication",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "browser": "dist-web/algogames-sdk.umd.js",
+  "scripts": {
+    "build": "npm run build:commonjs && npm run build:umd",
+    "build:commonjs": "tsc",
+    "build:umd": "vite build",
+    "dev": "tsc --watch",
+    "dev:web": "vite",
+    "clean": "rm -rf dist dist-web"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  }
+}

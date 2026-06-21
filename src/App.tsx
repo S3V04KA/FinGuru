@@ -4,6 +4,7 @@ import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-do
 import RoleCardPage from './pages/RoleCardPage'
 import RoleDetailsPage from './pages/RoleDetailsPage'
 import DreamPage from './pages/DreamPage'
+import GamePage from './pages/GamePage'
 import { icons, roleData, roleKeys } from './data/roles'
 import { dreams as defaultDreams } from './data/dreams'
 import { getSdk, subscribeDreamSelection, getPlayerInfo } from './sdk'
@@ -95,7 +96,7 @@ function DreamPageRoute() {
     dreams={dreams}
     currentPlayerId={sdkPlayerId}
     onDreamSelect={handleDreamSelect}
-    onStartGame={() => navigate('/')}
+    onStartGame={() => navigate(`/role/${roleName}/game` + window.location.search)}
   />
 }
 
@@ -115,6 +116,7 @@ function App() {
       } />
       <Route path="/role/:roleName/details" element={<RoleDetailsPageRoute />} />
       <Route path="/role/:roleName/dreams" element={<DreamPageRoute />} />
+      <Route path="/role/:roleName/game" element={<GamePage />} />
       <Route path="*" element={<RandomRoleRedirect />} />
       </Routes>
     </GameProvider>

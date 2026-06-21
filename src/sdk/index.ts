@@ -81,3 +81,97 @@ export function subscribeDreamSelection(
   sdk.onReceiveMessage(handler);
   return () => sdk.onReceiveMessage(() => {});
 }
+
+export interface PlayerGameState {
+  playerId: string
+  displayName: string
+  roleId: string
+  color: string
+  dreamId: number | null
+  cash: number
+  income: number
+  expenses: number
+  position: number
+  skipNextTurn: boolean
+}
+
+export interface DreamState {
+  id: number
+  title: string
+  number: string
+  description: string
+  price: number
+  chosenByPlayerId: string | null
+}
+
+export interface GameState {
+  roomId: string
+  phase: string
+  currentRound: number
+  winner: string | null
+  players: PlayerGameState[]
+  dreams: DreamState[]
+  currentPlayerId: string
+  turnCount: number
+}
+
+export function getGameState(sdk: AlgoGamesSDK, roomId: string): Promise<GameState | null> {
+  return new Promise((resolve) => {
+    const handler = (msg: { type: string; data: any }) => {
+      if (msg.type === 'finguru.gameState' && msg.data?.roomId === roomId) {
+        sdk.onReceiveMessage(() => {});
+        resolve(msg.data as GameState);
+      }
+    };
+    sdk.onReceiveMessage(handler);
+    sdk.sendAction('finguru.getGameState', { roomId });
+  });
+}
+
+export interface DiceRollResult {
+  rolledBy: string
+  dice1: number
+  dice2: number
+  total: number
+  newPosition: number
+  sectorType: string
+  sectorLabel: string
+  cashChange: number
+  newCash: number
+  nextPlayerId: string
+  isRoundPassed: boolean
+  currentRound: number
+  players: PlayerGameState[]
+}
+
+export function rollDice(sdk: AlgoGamesSDK, roomId: string, playerId: string): void {
+  sdk.sendAction('finguru.rollDice', { roomId, playerId });
+}
+
+export function subscribeDiceRoll(
+  sdk: AlgoGamesSDK,
+  roomId: string,
+  onUpdate: (result: DiceRollResult) => void
+): () => void {
+  const handler = (msg: { type: string; data: any }) => {
+    if (msg.type === 'finguru.diceRolled' && msg.data?.roomId === roomId) {
+      onUpdate(msg.data as DiceRollResult);
+    }
+  };
+  sdk.onReceiveMessage(handler);
+  return () => sdk.onReceiveMessage(() => {});
+}
+
+export function subscribeGameStateUpdate(
+  sdk: AlgoGamesSDK,
+  roomId: string,
+  onUpdate: (state: GameState) => void
+): () => void {
+  const handler = (msg: { type: string; data: any }) => {
+    if (msg.type === 'finguru.gameState' && msg.data?.roomId === roomId) {
+      onUpdate(msg.data as GameState);
+    }
+  };
+  sdk.onReceiveMessage(handler);
+  return () => sdk.onReceiveMessage(() => {});
+}
