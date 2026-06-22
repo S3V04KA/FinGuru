@@ -105,6 +105,7 @@ function RandomRoleRedirect() {
   const [searchParams] = useSearchParams()
   const roomId = searchParams.get('roomId') ?? ''
   const sdkPlayerId = searchParams.get('playerId') ?? ''
+  const [randomRole] = useState(() => roleKeys[Math.floor(Math.random() * roleKeys.length)])
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
@@ -131,9 +132,7 @@ function RandomRoleRedirect() {
   }, [])
 
   if (checking) return null
-
-  const [role] = useState(() => roleKeys[Math.floor(Math.random() * roleKeys.length)])
-  return <Navigate to={`/role/${role}`} replace />
+  return <Navigate to={`/role/${randomRole}`} replace />
 }
 
 function App() {
