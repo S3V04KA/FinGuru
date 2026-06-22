@@ -33,57 +33,56 @@ interface DiceWidgetProps {
 
 export default function DiceWidget({ rolling, result, onRoll, onClose }: DiceWidgetProps) {
   const [diceCount, setDiceCount] = useState(2)
-  const [phase, setPhase] = useState<'select' | 'rolling' | 'result'>('select')
   const [values, setValues] = useState<number[]>([])
-  const countRef = useRef(diceCount)
-  const rollingRef = useRef(false)
-  const settledRef = useRef(false)
-  countRef.current = diceCount
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
-  // Start cycling when rolling is true
+  // Cycle while rolling with no result yet
   useEffect(() => {
-    if (!rolling || phase !== 'rolling') return
+    if (!rolling || result) return
     const interval = setInterval(() => {
-      setValues(Array.from({ length: countRef.current }, () => Math.floor(Math.random() * 6) + 1))
+      setValues(Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1))
     }, 80)
     return () => clearInterval(interval)
-  }, [rolling, phase])
+  }, [rolling, result, diceCount])
 
-  // User clicked roll
-  const handleRoll = useCallback(() => {
-    if (rollingRef.current) return
-    rollingRef.current = true
-    settledRef.current = false
-    setPhase('rolling')
-    onRoll(countRef.current)
-  }, [onRoll])
-
-  // Backend result arrived — settle
+  // Safety timeout: if rolling for >4s with no result, force-settle
   useEffect(() => {
-    if (!result || settledRef.current) return
-    settledRef.current = true
+    if (!rolling || result) return
+    const timer = setTimeout(() => {
+      setValues(Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1))
+    }, 4000)
+    return () => clearTimeout(timer)
+  }, [rolling, result, diceCount])
+
+  // When backend result arrives — settle on those values
+  useEffect(() => {
+    if (!result) return
     const arr = [result.dice1, result.dice2]
     if (diceCount === 1) arr.length = 1
     setValues(arr)
-    setPhase('result')
   }, [result, diceCount])
 
-  // After settling, wait and close
+  // Auto-close 1.5s after result arrives
   useEffect(() => {
-    if (phase !== 'result') return
+    if (!result) return
     const timer = setTimeout(() => {
-      rollingRef.current = false
-      onClose()
+      onCloseRef.current()
     }, 1500)
     return () => clearTimeout(timer)
-  }, [phase, onClose])
+  }, [result])
 
   const sum = values.reduce((a, b) => a + b, 0)
 
-  return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.popover} onClick={e => e.stopPropagation()}>
-        {phase === 'select' && (
+  const handleRoll = useCallback(() => {
+    if (rolling) return
+    onRoll(diceCount)
+  }, [rolling, diceCount, onRoll])
+
+  if (!rolling && values.length === 0) {
+    return (
+      <div className={styles.overlay} onClick={onClose}>
+        <div className={styles.popover} onClick={e => e.stopPropagation()}>
           <div className={styles.inner}>
             <p className={styles.title}>Выберите количество кубиков</p>
             <div className={styles.options}>
@@ -108,27 +107,31 @@ export default function DiceWidget({ rolling, result, onRoll, onClose }: DiceWid
               Бросить кубик
             </button>
           </div>
-        )}
+        </div>
+      </div>
+    )
+  }
 
-        {phase !== 'select' && (
-          <div className={styles.inner}>
-            <div className={styles.diceDisplay}>
-              {values.map((v, i) => (
-                <Die key={i} value={v} size={64} />
-              ))}
-            </div>
-            <div className={styles.sumRow}>
-              <span className={styles.sumLabel}>Сумма</span>
-              <span className={styles.sumValue}>{sum}</span>
-            </div>
-            {phase === 'rolling' && (
-              <p className={styles.hint}>Бросаем...</p>
-            )}
-            {phase === 'result' && (
-              <p className={styles.hint}>✓</p>
-            )}
-          </div>
-        )}
+  return (
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.popover} onClick={e => e.stopPropagation()}>
+        <div className={styles.inner}>
+          {values.length > 0 ? (
+            <>
+              <div className={styles.diceDisplay}>
+                {values.map((v, i) => (
+                  <Die key={i} value={v} size={64} />
+                ))}
+              </div>
+              <div className={styles.sumRow}>
+                <span className={styles.sumLabel}>Сумма</span>
+                <span className={styles.sumValue}>{sum}</span>
+              </div>
+            </>
+          ) : (
+            <p className={styles.title}>Бросаем...</p>
+          )}
+        </div>
       </div>
     </div>
   )
