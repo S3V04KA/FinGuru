@@ -5,9 +5,21 @@ export type { TurnStrategy, TurnState } from 'algogames-sdk';
 
 let sdk: AlgoGamesSDK | null = null;
 
+function getParentOrigin(): string {
+  if (typeof window === 'undefined') return '*'
+  try {
+    if (window.parent !== window) {
+      return window.parent.location.origin
+    }
+  } catch {
+    return '*'
+  }
+  return '*'
+}
+
 export function getSdk(): AlgoGamesSDK {
   if (!sdk) {
-    sdk = new AlgoGamesSDK();
+    sdk = new AlgoGamesSDK(getParentOrigin());
   }
   return sdk;
 }
