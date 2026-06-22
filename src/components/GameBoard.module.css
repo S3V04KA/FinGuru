@@ -113,19 +113,19 @@
   background: linear-gradient(135deg, #5E5CE6 0%, #007AFF 100%);
   border: none;
   border-radius: 18px;
-  padding: 18px 56px;
+  padding: 14px 48px;
   font-family: 'Montserrat Alternates', sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   color: white;
   cursor: pointer;
   box-shadow: 0 6px 24px rgba(88, 86, 214, 0.45);
   transition: all 0.2s ease;
   letter-spacing: 0.5px;
   line-height: 1;
-  position: relative;
-  z-index: 1;
-  margin-bottom: 20px;
+  position: absolute;
+  bottom: 60px;
+  z-index: 10;
   flex-shrink: 0;
 }
 

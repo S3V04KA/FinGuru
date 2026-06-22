@@ -515,8 +515,6 @@ export default function GameBoard({
           </svg>
         </div>
 
-        <div style={{ flex: 1, minHeight: 0 }} />
-
         <button className={styles.rollButton} onClick={onRollDice}>
           Бросить кубик
         </button>
