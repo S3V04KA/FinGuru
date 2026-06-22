@@ -160,6 +160,10 @@ export function rollDice(sdk: AlgoGamesSDK, roomId: string, playerId: string): v
   sdk.sendAction('finguru.rollDice', { roomId, playerId });
 }
 
+export function selectDream(sdk: AlgoGamesSDK, roomId: string, playerId: string, dreamId: number): void {
+  sdk.sendAction('finguru.selectDream', { roomId, playerId, dreamId });
+}
+
 export function subscribeDiceRoll(
   sdk: AlgoGamesSDK,
   roomId: string,

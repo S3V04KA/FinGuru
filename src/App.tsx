@@ -7,7 +7,7 @@ import DreamPage from './pages/DreamPage'
 import GamePage from './pages/GamePage'
 import { icons, roleData, roleKeys, roleNames } from './data/roles'
 import { dreams as defaultDreams } from './data/dreams'
-import { getSdk, subscribeDreamSelection, getPlayerInfo, getGameState, type GameState } from './sdk'
+import { getSdk, subscribeDreamSelection, getPlayerInfo, getGameState, selectDream, type GameState } from './sdk'
 import type { DreamItem } from './pages/DreamPage'
 import './App.css'
 
@@ -28,11 +28,12 @@ function DreamPageRoute() {
   const navigate = useNavigate()
   const { roleName } = useParams<{ roleName: string }>()
   const data = roleName ? roleData[roleName] : undefined
-  const { players, currentPlayerId } = useGame()
+  const { players, currentPlayerId, setCurrentPlayerId, setCurrentRoleId } = useGame()
   const [dreams, setDreams] = useState<DreamItem[]>(() =>
     defaultDreams.map(d => ({ ...d, status: 'default' as const }))
   )
   const [myColor, setMyColor] = useState<string | undefined>(undefined)
+  const [loading, setLoading] = useState(true)
 
   const currentPlayer = players.find(p => p.id === currentPlayerId)
 
@@ -40,13 +41,40 @@ function DreamPageRoute() {
   const roomId = params.get('roomId') ?? ''
   const sdkPlayerId = params.get('playerId') ?? currentPlayerId ?? ''
 
+  function applyGameState(state: GameState) {
+    const me = state.players.find(p => p.playerId === sdkPlayerId)
+    if (!me) return
+
+    setMyColor(me.color)
+    if (me.roleId) setCurrentRoleId(me.roleId)
+    if (!currentPlayerId) setCurrentPlayerId(sdkPlayerId)
+
+    const updated: DreamItem[] = defaultDreams.map(d => {
+      const base: DreamItem = { ...d, status: 'default' }
+      if (d.id === me.dreamId) {
+        return { ...base, status: 'selected', takenByPlayerId: sdkPlayerId, playerName: me.displayName, color: me.color }
+      }
+      const serverDream = state.dreams.find(sd => sd.id === d.id)
+      if (serverDream?.chosenByPlayerId && serverDream.chosenByPlayerId !== sdkPlayerId) {
+        const otherPlayer = state.players.find(p => p.playerId === serverDream.chosenByPlayerId)
+        return { ...base, status: 'chosen', takenByPlayerId: serverDream.chosenByPlayerId, playerName: otherPlayer?.displayName ?? 'Игрок', color: otherPlayer?.color }
+      }
+      return base
+    })
+    setDreams(updated)
+  }
+
   useEffect(() => {
     if (!roomId || !sdkPlayerId) return
+    setLoading(true)
     const sdk = getSdk()
-    getPlayerInfo(sdk, roomId, sdkPlayerId).then(info => {
-      if (info.color) setMyColor(info.color)
-    })
-  }, [roomId, sdkPlayerId])
+    getGameState(sdk, roomId)
+      .then(state => {
+        if (state) applyGameState(state)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [roomId, sdkPlayerId, currentPlayerId, setCurrentPlayerId, setCurrentRoleId])
 
   useEffect(() => {
     if (!roomId || !sdkPlayerId) return
@@ -86,9 +114,14 @@ function DreamPageRoute() {
         return d
       })
     })
-  }, [currentPlayer, sdkPlayerId, myColor])
+    if (roomId && sdkPlayerId) {
+      const sdk = getSdk()
+      selectDream(sdk, roomId, sdkPlayerId, dreamId)
+    }
+  }, [currentPlayer, sdkPlayerId, myColor, roomId])
 
   if (!data) return <p>Роль не найдена</p>
+  if (loading) return <div className="loading">Загрузка...</div>
   return <DreamPage
     icon={icons[`/src/assets/roles/${roleName}.svg`] ?? ''}
     roleName={data.name}
@@ -121,6 +154,10 @@ function RandomRoleRedirect() {
         const me = state.players.find(p => p.playerId === sdkPlayerId)
         if (me?.dreamId != null) {
           navigate(`/role/${me.roleId}/game` + window.location.search, { replace: true })
+          return
+        }
+        if (me?.roleId) {
+          navigate(`/role/${me.roleId}/dreams` + window.location.search, { replace: true })
           return
         }
       }
