@@ -41,6 +41,17 @@ export async function initFinGuruGame(sdk: AlgoGamesSDK, roomId: string): Promis
   postToParent('finguru.initialize', { roomId })
 }
 
+export async function loadGameState(sdk: AlgoGamesSDK, roomId: string, maxRetries = 5): Promise<GameState | null> {
+  for (let i = 0; i < maxRetries; i++) {
+    const state = await getGameState(sdk, roomId)
+    if (state) return state
+    if (i < maxRetries - 1) {
+      await new Promise(r => setTimeout(r, 1000 * (i + 1)))
+    }
+  }
+  return null
+}
+
 export async function getPlayerRole(sdk: AlgoGamesSDK, roomId: string, playerId: string): Promise<string | null> {
   return new Promise((resolve) => {
     const handler = (msg: { type: string; data: any }) => {

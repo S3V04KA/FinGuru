@@ -7,7 +7,7 @@ import DreamPage from './pages/DreamPage'
 import GamePage from './pages/GamePage'
 import { icons, roleData, roleKeys, roleNames } from './data/roles'
 import { dreams as defaultDreams } from './data/dreams'
-import { getSdk, subscribeDreamSelection, getPlayerInfo, getGameState, selectDream, type GameState } from './sdk'
+import { getSdk, subscribeDreamSelection, getPlayerInfo, getGameState, loadGameState, selectDream, initFinGuruGame, type GameState } from './sdk'
 import type { DreamItem } from './pages/DreamPage'
 import './App.css'
 
@@ -68,12 +68,11 @@ function DreamPageRoute() {
     if (!roomId || !sdkPlayerId) return
     setLoading(true)
     const sdk = getSdk()
-    getGameState(sdk, roomId)
-      .then(state => {
-        if (state) applyGameState(state)
-        setLoading(false)
-      })
-      .catch(() => setLoading(false))
+    initFinGuruGame(sdk, roomId)
+    loadGameState(sdk, roomId).then(state => {
+      if (state) applyGameState(state)
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }, [roomId, sdkPlayerId, currentPlayerId, setCurrentPlayerId, setCurrentRoleId])
 
   useEffect(() => {
@@ -147,8 +146,8 @@ function RandomRoleRedirect() {
       return
     }
     const sdk = getSdk()
-    const timeout = setTimeout(() => setChecking(false), 2000)
-    getGameState(sdk, roomId).then(state => {
+    const timeout = setTimeout(() => setChecking(false), 10000)
+    loadGameState(sdk, roomId, 3).then(state => {
       clearTimeout(timeout)
       if (state?.phase === 'playing') {
         const me = state.players.find(p => p.playerId === sdkPlayerId)
