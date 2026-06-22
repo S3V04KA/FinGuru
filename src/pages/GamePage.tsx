@@ -121,8 +121,14 @@ export default function GamePage() {
     skipNextTurn: false,
   }
 
+  function reachedBigCircle(p: { dreamId: number | null; cash: number }): boolean {
+    if (p.dreamId == null) return false
+    const dream = defaultDreams.find(d => d.id === p.dreamId)
+    return dream ? p.cash >= dream.price : false
+  }
+
   const smallCirclePlayers = (gameState?.players ?? [])
-    .filter(p => p.income <= p.expenses)
+    .filter(p => !reachedBigCircle(p))
     .map(p => ({
       id: p.playerId,
       color: p.color,
@@ -132,7 +138,7 @@ export default function GamePage() {
     }))
 
   const bigSectorPlayers = (gameState?.players ?? [])
-    .filter(p => p.income > p.expenses)
+    .filter(p => reachedBigCircle(p))
     .map(p => ({
       id: p.playerId,
       color: p.color,
