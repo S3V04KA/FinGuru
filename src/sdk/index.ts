@@ -148,13 +148,17 @@ export interface GameState {
 export function getGameState(sdk: AlgoGamesSDK, roomId: string): Promise<GameState | null> {
   return new Promise((resolve) => {
     const handler = (msg: { type: string; data: any }) => {
-      if (msg.type === 'finguru.gameState' && msg.data?.roomId === roomId) {
+      if (msg.type === 'finguru.gameState') {
         sdk.onReceiveMessage(() => {})
-        resolve(msg.data as GameState)
+        resolve(msg.data as GameState | null)
       }
     }
     sdk.onReceiveMessage(handler)
     postToParent('finguru.getGameState', { roomId })
+    setTimeout(() => {
+      sdk.onReceiveMessage(() => {})
+      resolve(null)
+    }, 3000)
   })
 }
 
