@@ -121,18 +121,25 @@ export default function GamePage() {
     skipNextTurn: false,
   }
 
-  const boardPlayers = (gameState?.players ?? []).map(p => ({
-    id: p.playerId,
-    color: p.color,
-    letter: p.displayName.charAt(0).toUpperCase(),
-    cellIndex: p.position,
-    name: p.displayName,
-  }))
+  const smallCirclePlayers = (gameState?.players ?? [])
+    .filter(p => p.income <= p.expenses)
+    .map(p => ({
+      id: p.playerId,
+      color: p.color,
+      letter: p.displayName.charAt(0).toUpperCase(),
+      cellIndex: p.position,
+      name: p.displayName,
+    }))
 
-  const bigSectorPlayers = boardPlayers.map(p => ({
-    ...p,
-    cellIndex: ((p.cellIndex ?? 0) * 2) % 48,
-  }))
+  const bigSectorPlayers = (gameState?.players ?? [])
+    .filter(p => p.income > p.expenses)
+    .map(p => ({
+      id: p.playerId,
+      color: p.color,
+      letter: p.displayName.charAt(0).toUpperCase(),
+      cellIndex: (p.position * 2) % 48,
+      name: p.displayName,
+    }))
 
   const bigSectorDreams = (gameState?.players ?? [])
     .filter(p => p.dreamId != null)
@@ -172,7 +179,7 @@ export default function GamePage() {
 
       <div className={styles.boardColumn}>
         <GameBoard
-          players={boardPlayers}
+          players={smallCirclePlayers}
           bigSectorPlayers={bigSectorPlayers}
           bigSectorDreams={bigSectorDreams}
           currentPlayerId={isMyTurn ? sdkPlayerId : undefined}
