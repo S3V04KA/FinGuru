@@ -193,7 +193,7 @@ function App() {
     <GameProvider>
       <Routes>
       <Route path="/role/:roleName" element={
-        <RoleCardPage onTimeout={(roleName) => navigate(`/role/${roleName}/details`)} />
+        <RoleCardPage onTimeout={(roleName) => navigate(`/role/${roleName}/details${window.location.search}`)} />
       } />
       <Route path="/role/:roleName/details" element={<RoleDetailsPageRoute />} />
       <Route path="/role/:roleName/dreams" element={<DreamPageRoute />} />
