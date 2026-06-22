@@ -25,63 +25,48 @@ function Die({ value, size }: { value: number; size: number }) {
 }
 
 interface DiceWidgetProps {
-  rolling: boolean
-  result: { dice1: number; dice2: number } | null
   onRoll: (count: number) => void
   onClose: () => void
 }
 
-export default function DiceWidget({ rolling, result, onRoll, onClose }: DiceWidgetProps) {
+export default function DiceWidget({ onRoll, onClose }: DiceWidgetProps) {
+  const [phase, setPhase] = useState<'select' | 'rolling' | 'result'>('select')
   const [diceCount, setDiceCount] = useState(2)
   const [values, setValues] = useState<number[]>([])
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
-  // Cycle while rolling with no result yet
   useEffect(() => {
-    if (!rolling || result) return
+    if (phase !== 'rolling') return
     const interval = setInterval(() => {
       setValues(Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1))
     }, 80)
-    return () => clearInterval(interval)
-  }, [rolling, result, diceCount])
+    const settle = setTimeout(() => setPhase('result'), 1000)
+    return () => { clearInterval(interval); clearTimeout(settle) }
+  }, [phase, diceCount])
 
-  // Safety timeout: if rolling for >4s with no result, force-settle
   useEffect(() => {
-    if (!rolling || result) return
-    const timer = setTimeout(() => {
-      setValues(Array.from({ length: diceCount }, () => Math.floor(Math.random() * 6) + 1))
-    }, 4000)
-    return () => clearTimeout(timer)
-  }, [rolling, result, diceCount])
+    if (phase !== 'result') return
+    const t = setTimeout(() => onCloseRef.current(), 1500)
+    return () => clearTimeout(t)
+  }, [phase])
 
-  // When backend result arrives — settle on those values
-  useEffect(() => {
-    if (!result) return
-    const arr = [result.dice1, result.dice2]
-    if (diceCount === 1) arr.length = 1
-    setValues(arr)
-  }, [result, diceCount])
+  const handleRoll = useCallback(() => {
+    if (phase !== 'select') return
+    onRoll(diceCount)
+    setPhase('rolling')
+  }, [phase, diceCount, onRoll])
 
-  // Auto-close 1.5s after result arrives
-  useEffect(() => {
-    if (!result) return
-    const timer = setTimeout(() => {
-      onCloseRef.current()
-    }, 1500)
-    return () => clearTimeout(timer)
-  }, [result])
+  const handleOverlay = useCallback(() => {
+    if (phase === 'rolling') return
+    onClose()
+  }, [phase, onClose])
 
   const sum = values.reduce((a, b) => a + b, 0)
 
-  const handleRoll = useCallback(() => {
-    if (rolling) return
-    onRoll(diceCount)
-  }, [rolling, diceCount, onRoll])
-
-  if (!rolling && values.length === 0) {
+  if (phase === 'select') {
     return (
-      <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.overlay} onClick={handleOverlay}>
         <div className={styles.popover} onClick={e => e.stopPropagation()}>
           <div className={styles.inner}>
             <p className={styles.title}>Выберите количество кубиков</p>
@@ -113,23 +98,19 @@ export default function DiceWidget({ rolling, result, onRoll, onClose }: DiceWid
   }
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
+    <div className={styles.overlay} onClick={handleOverlay}>
       <div className={styles.popover} onClick={e => e.stopPropagation()}>
         <div className={styles.inner}>
-          {values.length > 0 ? (
-            <>
-              <div className={styles.diceDisplay}>
-                {values.map((v, i) => (
-                  <Die key={i} value={v} size={64} />
-                ))}
-              </div>
-              <div className={styles.sumRow}>
-                <span className={styles.sumLabel}>Сумма</span>
-                <span className={styles.sumValue}>{sum}</span>
-              </div>
-            </>
-          ) : (
-            <p className={styles.title}>Бросаем...</p>
+          <div className={styles.diceDisplay}>
+            {values.map((v, i) => (
+              <Die key={i} value={v} size={64} />
+            ))}
+          </div>
+          {phase === 'result' && (
+            <div className={styles.sumRow}>
+              <span className={styles.sumLabel}>Сумма</span>
+              <span className={styles.sumValue}>{sum}</span>
+            </div>
           )}
         </div>
       </div>

@@ -35,8 +35,6 @@ export default function GamePage() {
   const [activeTab, setActiveTab] = useState<'small' | 'big'>('small')
 
   const [showDice, setShowDice] = useState(false)
-  const [diceRolling, setDiceRolling] = useState(false)
-  const [diceResult, setDiceResult] = useState<{ dice1: number; dice2: number } | null>(null)
 
   const [animPos, setAnimPos] = useState<number | null>(null)
 
@@ -104,42 +102,30 @@ export default function GamePage() {
       const me = gameStateRef.current?.players.find(p => p.playerId === sdkPlayerId)
       if (me) setMyColor(me.color)
 
-      if (result.rolledBy === sdkPlayerId) {
-        if (isAnimatingRef.current) return
+      applyResult(result)
+
+      if (result.rolledBy === sdkPlayerId && !isAnimatingRef.current) {
         isAnimatingRef.current = true
         clearTimers()
 
-        setDiceRolling(false)
-        setDiceResult({ dice1: result.dice1, dice2: result.dice2 })
+        const oldPos = me?.position ?? 0
+        const total = result.total
+        let step = 0
 
-        const settleTimer = setTimeout(() => {
-          setDiceResult(null)
-          setShowDice(false)
-
-          const oldPos = me?.position ?? 0
-          const total = result.total
-          let step = 0
-
-          const doStep = () => {
-            step++
-            setAnimPos((oldPos + step) % 24)
-            if (step >= total) {
-              setAnimPos(null)
-              applyResult(result)
-              isAnimatingRef.current = false
-            } else {
-              const t = setTimeout(doStep, STEP_MS)
-              timersRef.current.push(t)
-            }
+        const doStep = () => {
+          step++
+          setAnimPos((oldPos + step) % 24)
+          if (step >= total) {
+            setAnimPos(null)
+            isAnimatingRef.current = false
+          } else {
+            const t = setTimeout(doStep, STEP_MS)
+            timersRef.current.push(t)
           }
+        }
 
-          const t = setTimeout(doStep, 350)
-          timersRef.current.push(t)
-        }, 800) // show settled dice for 800ms
-
-        timersRef.current.push(settleTimer)
-      } else {
-        applyResult(result)
+        const t = setTimeout(doStep, 350)
+        timersRef.current.push(t)
       }
     })
     return unsub
@@ -154,12 +140,10 @@ export default function GamePage() {
   }, [roomId])
 
   const handleRollRequest = useCallback((_count: number) => {
-    setDiceRolling(true)
     rollDice(roomId, sdkPlayerId)
   }, [roomId, sdkPlayerId])
 
   const isMyTurn = gameState?.currentPlayerId === sdkPlayerId
-  const alreadyRolling = isAnimatingRef.current
 
   if (!data) return <p>Роль не найдена</p>
 
@@ -251,7 +235,7 @@ export default function GamePage() {
         <MoveHistory title="История ходов" entries={moveHistory} />
       </div>
 
-      {isMyTurn && !alreadyRolling && (
+      {isMyTurn && !isAnimatingRef.current && (
         <button className={styles.rollFab} onClick={() => setShowDice(true)}>
           Бросить кубик
         </button>
@@ -259,10 +243,8 @@ export default function GamePage() {
 
       {showDice && (
         <DiceWidget
-          rolling={diceRolling}
-          result={diceResult}
           onRoll={handleRollRequest}
-          onClose={() => { if (!alreadyRolling) { setShowDice(false); clearTimers() } }}
+          onClose={() => setShowDice(false)}
         />
       )}
     </div>
