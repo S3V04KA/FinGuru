@@ -248,6 +248,16 @@
   opacity: 0.75;
 }
 
+.startButton:disabled {
+  background: #c7c7cc;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.startButton:disabled:hover {
+  opacity: 1;
+}
+
 @media (max-width: 1024px) {
   .page {
     padding: 32px 16px 60px;

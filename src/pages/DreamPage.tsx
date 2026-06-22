@@ -77,6 +77,8 @@ function DreamCard({ item, onSelect, currentPlayerId }: { item: DreamItem; onSel
 }
 
 export default function DreamPage({ icon, roleName, monthlyCashFlow, dreams, currentPlayerId, onStartGame, onDreamSelect }: DreamPageProps) {
+  const hasSelectedDream = dreams.some(d => d.status === 'selected' && d.takenByPlayerId === currentPlayerId)
+
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
@@ -103,7 +105,11 @@ export default function DreamPage({ icon, roleName, monthlyCashFlow, dreams, cur
       </div>
 
       {onStartGame && (
-        <button className={styles.startButton} onClick={onStartGame}>
+        <button
+          className={styles.startButton}
+          onClick={onStartGame}
+          disabled={!hasSelectedDream}
+        >
           Начать игру
         </button>
       )}

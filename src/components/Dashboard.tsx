@@ -109,11 +109,7 @@ export default function Dashboard({
           moveNumber={moveNumber}
         />
         <div className={styles.avatar}>
-          {icon ? (
-            <img src={icon} alt={playerRole} className={styles.avatarIcon} />
-          ) : (
-            <div className={styles.avatarCircle} />
-          )}
+          <div className={styles.avatarCircle} />
           <div className={styles.avatarRing} />
         </div>
       </div>
