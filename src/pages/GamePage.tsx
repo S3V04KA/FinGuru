@@ -7,10 +7,10 @@ import MoveHistory from '../components/MoveHistory'
 import { icons, roleData, roleNames } from '../data/roles'
 import { dreams as defaultDreams } from '../data/dreams'
 import {
-  getSdk,
   getGameState,
   rollDice,
   subscribeDiceRoll,
+  subscribeGameStateUpdate,
   type GameState,
   type DiceRollResult,
   type PlayerGameState,
@@ -35,8 +35,7 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!roomId) return
-    const sdk = getSdk()
-    getGameState(sdk, roomId).then(state => {
+    getGameState(roomId).then(state => {
       if (state) {
         setGameState(state)
         const me = state.players.find(p => p.playerId === sdkPlayerId)
@@ -47,8 +46,7 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!roomId) return
-    const sdk = getSdk()
-    const unsub = subscribeDiceRoll(sdk, roomId, (result: DiceRollResult) => {
+    const unsub = subscribeDiceRoll(roomId, (result: DiceRollResult) => {
       setGameState(prev => {
         if (!prev) return prev
         return {
@@ -91,11 +89,18 @@ export default function GamePage() {
     return unsub
   }, [roomId, sdkPlayerId])
 
+  useEffect(() => {
+    if (!roomId) return
+    const unsub = subscribeGameStateUpdate(roomId, (state) => {
+      setGameState(state)
+    })
+    return unsub
+  }, [roomId])
+
   const handleRollDice = useCallback(() => {
     if (isRolling) return
     setIsRolling(true)
-    const sdk = getSdk()
-    rollDice(sdk, roomId, sdkPlayerId)
+    rollDice(roomId, sdkPlayerId)
   }, [roomId, sdkPlayerId, isRolling])
 
   if (!data) return <p>Роль не найдена</p>

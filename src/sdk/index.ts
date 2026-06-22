@@ -1,23 +1,18 @@
-import { AlgoGamesSDK } from 'algogames-sdk';
+import { AlgoGamesSDK } from 'algogames-sdk'
 
-export { AlgoGamesSDK };
-export type { TurnStrategy, TurnState } from 'algogames-sdk';
+export { AlgoGamesSDK }
+export type { TurnStrategy, TurnState } from 'algogames-sdk'
 
-let sdk: AlgoGamesSDK | null = null;
+let sdk: AlgoGamesSDK | null = null
+let parentOrigin = '*'
 
 function getParentOrigin(): string {
   if (typeof window === 'undefined') return '*'
   try {
-    if (window.parent !== window) {
-      return window.parent.location.origin
-    }
-  } catch {
-    return '*'
-  }
+    if (window.parent !== window) return window.parent.location.origin
+  } catch { /* ignore */ }
   return '*'
 }
-
-let parentOrigin = '*'
 
 export function getSdk(): AlgoGamesSDK {
   if (!sdk) {
@@ -31,85 +26,91 @@ function postToParent(type: string, payload: Record<string, unknown>): void {
   window.parent.postMessage({ type, payload }, parentOrigin)
 }
 
-export async function initSdk(): Promise<AlgoGamesSDK> {
-  const s = getSdk()
-  await s.init()
-  return s
+// ─── Multi-handler message dispatch ──────────────────────────────
+
+type FinguruHandler = (msg: { type: string; data: any }) => void
+const typeHandlers = new Map<string, Set<FinguruHandler>>()
+let globalListenerInstalled = false
+
+function installGlobalListener(): void {
+  if (globalListenerInstalled) return
+  globalListenerInstalled = true
+  window.addEventListener('message', (event) => {
+    const { type, payload } = event.data || {}
+    if (type !== 'game.message' && type !== 'game.broadcast') return
+    const innerType: string | undefined = payload?.type
+    const innerData: any = payload?.data
+    if (!innerType) return
+    const set = typeHandlers.get(innerType)
+    if (set) set.forEach(h => h({ type: innerType, data: innerData }))
+  })
 }
 
-export async function initFinGuruGame(sdk: AlgoGamesSDK, roomId: string): Promise<void> {
+function on(type: string, handler: FinguruHandler): () => void {
+  installGlobalListener()
+  if (!typeHandlers.has(type)) typeHandlers.set(type, new Set())
+  typeHandlers.get(type)!.add(handler)
+  return () => { typeHandlers.get(type)?.delete(handler) }
+}
+
+function once(type: string): Promise<any> {
+  return new Promise((resolve) => {
+    const unsub = on(type, (msg) => { unsub(); resolve(msg.data) })
+    setTimeout(() => { unsub(); resolve(null) }, 5000)
+  })
+}
+
+// ─── FinGuru protocol functions ─────────────────────────────────
+
+export async function initFinGuruGame(roomId: string, playerId: string): Promise<{ roleId: string; color: string } | null> {
+  const promise = once('finguru.roleAssigned')
   postToParent('finguru.initialize', { roomId })
-}
-
-export async function loadGameState(sdk: AlgoGamesSDK, roomId: string, maxRetries = 5): Promise<GameState | null> {
-  for (let i = 0; i < maxRetries; i++) {
-    const state = await getGameState(sdk, roomId)
-    if (state) return state
-    if (i < maxRetries - 1) {
-      await new Promise(r => setTimeout(r, 1000 * (i + 1)))
-    }
+  const data = await promise
+  if (data?.roomId === roomId && data?.roleId) {
+    return { roleId: data.roleId, color: data.color }
   }
   return null
 }
 
-export async function getPlayerRole(sdk: AlgoGamesSDK, roomId: string, playerId: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const handler = (msg: { type: string; data: any }) => {
-      if (msg.type === 'finguru.roleAssigned' && msg.data?.roomId === roomId) {
-        sdk.onReceiveMessage(() => {})
-        resolve(msg.data.roleId)
-      }
-    }
-    sdk.onReceiveMessage(handler)
-    postToParent('finguru.getRole', { roomId, playerId })
-  })
+export function getGameState(roomId: string): Promise<GameState | null> {
+  const promise = once('finguru.gameState')
+  postToParent('finguru.getGameState', { roomId })
+  return promise.then(data => data && data.roomId === roomId ? data as GameState : null)
 }
 
-export async function getPlayerInfo(sdk: AlgoGamesSDK, roomId: string, playerId: string): Promise<{ roleId: string | null; color: string | null }> {
-  return new Promise((resolve) => {
-    const handler = (msg: { type: string; data: any }) => {
-      if (msg.type === 'finguru.roleAssigned' && msg.data?.roomId === roomId) {
-        sdk.onReceiveMessage(() => {})
-        resolve({ roleId: msg.data.roleId ?? null, color: msg.data.color ?? null })
-      }
-    }
-    sdk.onReceiveMessage(handler)
-    postToParent('finguru.getRole', { roomId, playerId })
-  })
+export function selectDream(roomId: string, playerId: string, dreamId: number): void {
+  postToParent('finguru.selectDream', { roomId, playerId, dreamId })
 }
 
-export interface DreamServerState {
-  id: number
-  chosenByPlayerId: string | null
+export function rollDice(roomId: string, playerId: string): void {
+  postToParent('finguru.rollDice', { roomId, playerId })
 }
+
+// ─── Subscriptions ──────────────────────────────────────────────
 
 export interface DreamSelectionUpdate {
   dreamId: number
   selectedBy: string
-  dreams: DreamServerState[]
+  dreams: { id: number; chosenByPlayerId: string | null }[]
   playerColors: Record<string, string>
   playerNames: Record<string, string>
 }
 
 export function subscribeDreamSelection(
-  sdk: AlgoGamesSDK,
   roomId: string,
-  _playerId: string,
-  onUpdate: (update: DreamSelectionUpdate) => void
+  cb: (update: DreamSelectionUpdate) => void
 ): () => void {
-  const handler = (msg: { type: string; data: any }) => {
-    if (msg.type === 'finguru.dreamSelected' && msg.data?.roomId === roomId) {
-      onUpdate({
+  return on('finguru.dreamSelected', (msg) => {
+    if (msg.data?.roomId === roomId) {
+      cb({
         dreamId: msg.data.dreamId,
         selectedBy: msg.data.selectedBy,
-        dreams: msg.data.dreams,
+        dreams: msg.data.dreams ?? [],
         playerColors: msg.data.playerColors ?? {},
         playerNames: msg.data.playerNames ?? {},
       })
     }
-  }
-  sdk.onReceiveMessage(handler)
-  return () => sdk.onReceiveMessage(() => {})
+  })
 }
 
 export interface PlayerGameState {
@@ -145,23 +146,6 @@ export interface GameState {
   turnCount: number
 }
 
-export function getGameState(sdk: AlgoGamesSDK, roomId: string): Promise<GameState | null> {
-  return new Promise((resolve) => {
-    const handler = (msg: { type: string; data: any }) => {
-      if (msg.type === 'finguru.gameState') {
-        sdk.onReceiveMessage(() => {})
-        resolve(msg.data as GameState | null)
-      }
-    }
-    sdk.onReceiveMessage(handler)
-    postToParent('finguru.getGameState', { roomId })
-    setTimeout(() => {
-      sdk.onReceiveMessage(() => {})
-      resolve(null)
-    }, 3000)
-  })
-}
-
 export interface DiceRollResult {
   rolledBy: string
   dice1: number
@@ -178,38 +162,20 @@ export interface DiceRollResult {
   players: PlayerGameState[]
 }
 
-export function rollDice(sdk: AlgoGamesSDK, roomId: string, playerId: string): void {
-  postToParent('finguru.rollDice', { roomId, playerId })
-}
-
-export function selectDream(sdk: AlgoGamesSDK, roomId: string, playerId: string, dreamId: number): void {
-  postToParent('finguru.selectDream', { roomId, playerId, dreamId })
-}
-
 export function subscribeDiceRoll(
-  sdk: AlgoGamesSDK,
   roomId: string,
-  onUpdate: (result: DiceRollResult) => void
+  cb: (result: DiceRollResult) => void
 ): () => void {
-  const handler = (msg: { type: string; data: any }) => {
-    if (msg.type === 'finguru.diceRolled' && msg.data?.roomId === roomId) {
-      onUpdate(msg.data as DiceRollResult)
-    }
-  }
-  sdk.onReceiveMessage(handler)
-  return () => sdk.onReceiveMessage(() => {})
+  return on('finguru.diceRolled', (msg) => {
+    if (msg.data?.roomId === roomId) cb(msg.data as DiceRollResult)
+  })
 }
 
 export function subscribeGameStateUpdate(
-  sdk: AlgoGamesSDK,
   roomId: string,
-  onUpdate: (state: GameState) => void
+  cb: (state: GameState) => void
 ): () => void {
-  const handler = (msg: { type: string; data: any }) => {
-    if (msg.type === 'finguru.gameState' && msg.data?.roomId === roomId) {
-      onUpdate(msg.data as GameState)
-    }
-  }
-  sdk.onReceiveMessage(handler)
-  return () => sdk.onReceiveMessage(() => {})
+  return on('finguru.gameState', (msg) => {
+    if (msg.data?.roomId === roomId) cb(msg.data as GameState)
+  })
 }
