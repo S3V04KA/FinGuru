@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import Dashboard from '../components/Dashboard'
 import GameBoard from '../components/GameBoard'
 import MoveHistory from '../components/MoveHistory'
+import DiceOverlay from '../components/DiceOverlay'
 import { icons, roleData, roleNames } from '../data/roles'
 import { dreams as defaultDreams } from '../data/dreams'
 import {
@@ -16,6 +17,10 @@ import {
   type PlayerGameState,
 } from '../sdk'
 import styles from './GamePage.module.css'
+
+const STEP_INTERVAL = 350
+const ROLLING_DURATION = 1200
+const SETTLED_DURATION = 500
 
 export default function GamePage() {
   const navigate = useNavigate()
@@ -33,6 +38,51 @@ export default function GamePage() {
   const [activeTab, setActiveTab] = useState<'small' | 'big'>('small')
   const [isRolling, setIsRolling] = useState(false)
 
+  // Dice animation state
+  const [diceDisplay, setDiceDisplay] = useState<{ v1: number; v2: number } | null>(null)
+  const [dicePhase, setDicePhase] = useState<'hidden' | 'rolling' | 'settled'>('hidden')
+  const [animatingPosition, setAnimatingPosition] = useState<number | null>(null)
+
+  const pendingResultRef = useRef<DiceRollResult | null>(null)
+  const oldPositionRef = useRef<number>(0)
+  const gameStateRef = useRef<GameState | null>(null)
+  gameStateRef.current = gameState
+
+  const applyResult = useCallback((result: DiceRollResult) => {
+    setGameState(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        players: result.players,
+        currentRound: result.currentRound,
+        currentPlayerId: result.nextPlayerId,
+      }
+    })
+    const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
+    setMoveHistory(prev => [
+      {
+        playerName: rolledPlayer?.displayName ?? result.rolledBy,
+        playerColor: rolledPlayer?.color ?? '#999',
+        moveLabel: `Ход ${result.total}`,
+        time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+        transactionType: result.sectorLabel,
+        transactionTypeColor: getSectorColor(result.sectorType),
+        action: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
+        actionColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
+        finances: [
+          {
+            label: 'Наличные',
+            change: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
+            changeColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
+            result: `${result.newCash}`,
+            resultColor: 'rgb(0, 0, 0)',
+          },
+        ],
+      },
+      ...prev,
+    ])
+  }, [])
+
   useEffect(() => {
     if (!roomId) return
     getGameState(roomId).then(state => {
@@ -44,58 +94,74 @@ export default function GamePage() {
     })
   }, [roomId, sdkPlayerId])
 
+  // Rolling phase — cycle random values
+  useEffect(() => {
+    if (dicePhase !== 'rolling') return
+    const interval = setInterval(() => {
+      setDiceDisplay({
+        v1: Math.floor(Math.random() * 6) + 1,
+        v2: Math.floor(Math.random() * 6) + 1,
+      })
+    }, 100)
+    return () => clearInterval(interval)
+  }, [dicePhase])
+
+  // Settled phase — show actual values → start movement
+  useEffect(() => {
+    if (dicePhase !== 'settled') return
+    const result = pendingResultRef.current
+    if (!result) return
+    setDiceDisplay({ v1: result.dice1, v2: result.dice2 })
+
+    const timer = setTimeout(() => {
+      const oldPos = oldPositionRef.current
+      const total = result.total
+      let step = 0
+
+      const moveInterval = setInterval(() => {
+        step++
+        const pos = (oldPos + step) % 24
+        setAnimatingPosition(pos)
+
+        if (step >= total) {
+          clearInterval(moveInterval)
+          applyResult(result)
+          setAnimatingPosition(null)
+          setDiceDisplay(null)
+          setDicePhase('hidden')
+          setIsRolling(false)
+        }
+      }, STEP_INTERVAL)
+    }, SETTLED_DURATION)
+
+    return () => clearTimeout(timer)
+  }, [dicePhase, applyResult])
+
   useEffect(() => {
     if (!roomId) return
     const unsub = subscribeDiceRoll(roomId, (result: DiceRollResult) => {
-      setGameState(prev => {
-        if (!prev) return prev
-        return {
-          ...prev,
-          players: result.players,
-          currentRound: result.currentRound,
-          currentPlayerId: result.nextPlayerId,
-        }
-      })
-
-      const me = result.players.find(p => p.playerId === sdkPlayerId)
+      const me = gameStateRef.current?.players.find(p => p.playerId === sdkPlayerId)
       if (me) setMyColor(me.color)
 
-      const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
-      setMoveHistory(prev => [
-        {
-          playerName: rolledPlayer?.displayName ?? result.rolledBy,
-          playerColor: rolledPlayer?.color ?? '#999',
-          moveLabel: `Ход ${result.total}`,
-          time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
-          transactionType: result.sectorLabel,
-          transactionTypeColor: getSectorColor(result.sectorType),
-          action: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
-          actionColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
-          finances: [
-            {
-              label: 'Наличные',
-              change: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
-              changeColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
-              result: `${result.newCash}`,
-              resultColor: 'rgb(0, 0, 0)',
-            },
-          ],
-        },
-        ...prev,
-      ])
-
-      setIsRolling(false)
+      if (result.rolledBy === sdkPlayerId) {
+        pendingResultRef.current = result
+        oldPositionRef.current = me?.position ?? 0
+        setDiceDisplay({ v1: result.dice1, v2: result.dice2 })
+        setDicePhase('rolling')
+      } else {
+        applyResult(result)
+      }
     })
     return unsub
-  }, [roomId, sdkPlayerId])
+  }, [roomId, sdkPlayerId, applyResult])
 
   useEffect(() => {
     if (!roomId) return
     const unsub = subscribeGameStateUpdate(roomId, (state) => {
-      setGameState(state)
+      if (dicePhase === 'hidden') setGameState(state)
     })
     return unsub
-  }, [roomId])
+  }, [roomId, dicePhase])
 
   const handleRollDice = useCallback(() => {
     if (isRolling) return
@@ -107,6 +173,7 @@ export default function GamePage() {
 
   const me = gameState?.players.find(p => p.playerId === sdkPlayerId)
   const myDream = me?.dreamId != null ? defaultDreams.find(d => d.id === me.dreamId) : null
+  const myPosition = animatingPosition !== null ? animatingPosition : (me?.position ?? 0)
 
   const dashboardPlayer = me ?? {
     playerId: sdkPlayerId,
@@ -117,7 +184,7 @@ export default function GamePage() {
     cash: 0,
     income: data.financialData.income.total,
     expenses: data.financialData.expenses.total,
-    position: 0,
+    position: myPosition,
     skipNextTurn: false,
   }
 
@@ -133,7 +200,7 @@ export default function GamePage() {
       id: p.playerId,
       color: p.color,
       letter: p.displayName.charAt(0).toUpperCase(),
-      cellIndex: p.position,
+      cellIndex: animatingPosition !== null && p.playerId === sdkPlayerId ? animatingPosition : p.position,
       name: p.displayName,
     }))
 
@@ -152,11 +219,7 @@ export default function GamePage() {
     .map(p => {
       const dreamIndex = (p.dreamId! - 1) % 7
       const cellIndex = (dreamIndex * 7) % 48
-      return {
-        cellIndex,
-        playerName: p.displayName,
-        color: p.color,
-      }
+      return { cellIndex, playerName: p.displayName, color: p.color }
     })
 
   const isMyTurn = gameState?.currentPlayerId === sdkPlayerId
@@ -201,6 +264,10 @@ export default function GamePage() {
           entries={moveHistory}
         />
       </div>
+
+      {diceDisplay && dicePhase !== 'hidden' && (
+        <DiceOverlay value1={diceDisplay.v1} value2={diceDisplay.v2} />
+      )}
     </div>
   )
 }

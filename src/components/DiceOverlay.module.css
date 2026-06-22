@@ -1,0 +1,59 @@
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.08); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+.diceRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  animation: bounceIn 0.5s ease;
+}
+
+.die {
+  width: 100px;
+  height: 100px;
+  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.3));
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.plus,
+.equals {
+  font-size: 36px;
+  color: white;
+  font-weight: 700;
+  font-family: 'Montserrat Alternates', sans-serif;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.total {
+  font-size: 52px;
+  color: white;
+  font-weight: 800;
+  font-family: 'Montserrat Alternates', sans-serif;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
