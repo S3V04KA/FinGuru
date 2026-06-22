@@ -17,47 +17,54 @@ function getParentOrigin(): string {
   return '*'
 }
 
+let parentOrigin = '*'
+
 export function getSdk(): AlgoGamesSDK {
   if (!sdk) {
-    sdk = new AlgoGamesSDK(getParentOrigin());
+    parentOrigin = getParentOrigin()
+    sdk = new AlgoGamesSDK(parentOrigin)
   }
-  return sdk;
+  return sdk
+}
+
+function postToParent(type: string, payload: Record<string, unknown>): void {
+  window.parent.postMessage({ type, payload }, parentOrigin)
 }
 
 export async function initSdk(): Promise<AlgoGamesSDK> {
-  const s = getSdk();
-  await s.init();
-  return s;
+  const s = getSdk()
+  await s.init()
+  return s
 }
 
 export async function initFinGuruGame(sdk: AlgoGamesSDK, roomId: string): Promise<void> {
-  sdk.sendAction('finguru.initialize', { roomId });
+  postToParent('finguru.initialize', { roomId })
 }
 
 export async function getPlayerRole(sdk: AlgoGamesSDK, roomId: string, playerId: string): Promise<string | null> {
   return new Promise((resolve) => {
     const handler = (msg: { type: string; data: any }) => {
       if (msg.type === 'finguru.roleAssigned' && msg.data?.roomId === roomId) {
-        sdk.onReceiveMessage(() => {});
-        resolve(msg.data.roleId);
+        sdk.onReceiveMessage(() => {})
+        resolve(msg.data.roleId)
       }
-    };
-    sdk.onReceiveMessage(handler);
-    sdk.sendAction('finguru.getRole', { roomId, playerId });
-  });
+    }
+    sdk.onReceiveMessage(handler)
+    postToParent('finguru.getRole', { roomId, playerId })
+  })
 }
 
 export async function getPlayerInfo(sdk: AlgoGamesSDK, roomId: string, playerId: string): Promise<{ roleId: string | null; color: string | null }> {
   return new Promise((resolve) => {
     const handler = (msg: { type: string; data: any }) => {
       if (msg.type === 'finguru.roleAssigned' && msg.data?.roomId === roomId) {
-        sdk.onReceiveMessage(() => {});
-        resolve({ roleId: msg.data.roleId ?? null, color: msg.data.color ?? null });
+        sdk.onReceiveMessage(() => {})
+        resolve({ roleId: msg.data.roleId ?? null, color: msg.data.color ?? null })
       }
-    };
-    sdk.onReceiveMessage(handler);
-    sdk.sendAction('finguru.getRole', { roomId, playerId });
-  });
+    }
+    sdk.onReceiveMessage(handler)
+    postToParent('finguru.getRole', { roomId, playerId })
+  })
 }
 
 export interface DreamServerState {
@@ -87,11 +94,11 @@ export function subscribeDreamSelection(
         dreams: msg.data.dreams,
         playerColors: msg.data.playerColors ?? {},
         playerNames: msg.data.playerNames ?? {},
-      });
+      })
     }
-  };
-  sdk.onReceiveMessage(handler);
-  return () => sdk.onReceiveMessage(() => {});
+  }
+  sdk.onReceiveMessage(handler)
+  return () => sdk.onReceiveMessage(() => {})
 }
 
 export interface PlayerGameState {
@@ -131,13 +138,13 @@ export function getGameState(sdk: AlgoGamesSDK, roomId: string): Promise<GameSta
   return new Promise((resolve) => {
     const handler = (msg: { type: string; data: any }) => {
       if (msg.type === 'finguru.gameState' && msg.data?.roomId === roomId) {
-        sdk.onReceiveMessage(() => {});
-        resolve(msg.data as GameState);
+        sdk.onReceiveMessage(() => {})
+        resolve(msg.data as GameState)
       }
-    };
-    sdk.onReceiveMessage(handler);
-    sdk.sendAction('finguru.getGameState', { roomId });
-  });
+    }
+    sdk.onReceiveMessage(handler)
+    postToParent('finguru.getGameState', { roomId })
+  })
 }
 
 export interface DiceRollResult {
@@ -157,11 +164,11 @@ export interface DiceRollResult {
 }
 
 export function rollDice(sdk: AlgoGamesSDK, roomId: string, playerId: string): void {
-  sdk.sendAction('finguru.rollDice', { roomId, playerId });
+  postToParent('finguru.rollDice', { roomId, playerId })
 }
 
 export function selectDream(sdk: AlgoGamesSDK, roomId: string, playerId: string, dreamId: number): void {
-  sdk.sendAction('finguru.selectDream', { roomId, playerId, dreamId });
+  postToParent('finguru.selectDream', { roomId, playerId, dreamId })
 }
 
 export function subscribeDiceRoll(
@@ -171,11 +178,11 @@ export function subscribeDiceRoll(
 ): () => void {
   const handler = (msg: { type: string; data: any }) => {
     if (msg.type === 'finguru.diceRolled' && msg.data?.roomId === roomId) {
-      onUpdate(msg.data as DiceRollResult);
+      onUpdate(msg.data as DiceRollResult)
     }
-  };
-  sdk.onReceiveMessage(handler);
-  return () => sdk.onReceiveMessage(() => {});
+  }
+  sdk.onReceiveMessage(handler)
+  return () => sdk.onReceiveMessage(() => {})
 }
 
 export function subscribeGameStateUpdate(
@@ -185,9 +192,9 @@ export function subscribeGameStateUpdate(
 ): () => void {
   const handler = (msg: { type: string; data: any }) => {
     if (msg.type === 'finguru.gameState' && msg.data?.roomId === roomId) {
-      onUpdate(msg.data as GameState);
+      onUpdate(msg.data as GameState)
     }
-  };
-  sdk.onReceiveMessage(handler);
-  return () => sdk.onReceiveMessage(() => {});
+  }
+  sdk.onReceiveMessage(handler)
+  return () => sdk.onReceiveMessage(() => {})
 }
