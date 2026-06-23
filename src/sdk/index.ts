@@ -179,3 +179,67 @@ export function subscribeGameStateUpdate(
     if (msg.data?.roomId === roomId) cb(msg.data as GameState)
   })
 }
+
+// ─── Deal card types ────────────────────────────────────────────
+
+export interface FinGuruDealCardDetail {
+  name: string
+  amount: number | string
+  negative: boolean
+}
+
+export interface FinGuruDealCard {
+  id: number
+  name: string
+  description: string
+  amount: number | string
+  headerLabel?: string
+  details: FinGuruDealCardDetail[]
+}
+
+export type DealType = 'small' | 'big'
+
+export interface DealCardDrawResult {
+  roomId: string
+  playerId: string
+  dealType: DealType
+  card: FinGuruDealCard | null
+  error?: string
+}
+
+// ─── Deal card protocol functions ───────────────────────────────
+
+export function drawDealCard(
+  roomId: string,
+  playerId: string,
+  dealType: DealType
+): Promise<DealCardDrawResult | null> {
+  const promise = once('finguru.dealCardDrawn')
+  postToParent('finguru.drawDealCard', { roomId, playerId, dealType })
+  return promise.then(data => data && data.roomId === roomId ? data as DealCardDrawResult : null)
+}
+
+export function buyDeal(
+  roomId: string,
+  playerId: string,
+  cardIndex: number,
+  dealType: DealType
+): void {
+  postToParent('finguru.buyDeal', { roomId, playerId, cardIndex, dealType })
+}
+
+export function skipDeal(
+  roomId: string,
+  playerId: string
+): void {
+  postToParent('finguru.skipDeal', { roomId, playerId })
+}
+
+export function subscribeDealCardDrawn(
+  roomId: string,
+  cb: (result: DealCardDrawResult) => void
+): () => void {
+  return on('finguru.dealCardDrawn', (msg) => {
+    if (msg.data?.roomId === roomId) cb(msg.data as DealCardDrawResult)
+  })
+}

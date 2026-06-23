@@ -7,6 +7,9 @@ import MoveHistory from '../components/MoveHistory'
 import DiceWidget from '../components/DiceWidget'
 import { icons, roleData, roleNames } from '../data/roles'
 import { dreams as defaultDreams } from '../data/dreams'
+import DealSelectionModal from '../components/dealSelection/DealSelectionModal'
+import BigDealCard from '../components/cards/BigDealCard'
+import SmallDealCard from '../components/cards/SmallDealCard'
 import {
   getGameState,
   rollDice,
@@ -14,7 +17,16 @@ import {
   subscribeGameStateUpdate,
   type GameState,
   type DiceRollResult,
+  type FinGuruDealCard,
+  type DealType,
+  buyDeal,
+  skipDeal,
 } from '../sdk'
+import {
+  getBigDealCards,
+  getSmallDealCards,
+  type CardDto,
+} from '../api/cards'
 import styles from './GamePage.module.css'
 
 const STEP_MS = 350
@@ -38,7 +50,16 @@ export default function GamePage() {
 
   const [animPos, setAnimPos] = useState<number | null>(null)
 
+  // Deal flow state
+  const [showDealSelection, setShowDealSelection] = useState(false)
+  const [currentDealCard, setCurrentDealCard] = useState<FinGuruDealCard | null>(null)
+  const [currentDealType, setCurrentDealType] = useState<DealType>('small')
+  const [showDealCard, setShowDealCard] = useState(false)
+  const [dealLoading, setDealLoading] = useState(false)
+  const [dealError, setDealError] = useState<string | null>(null)
+
   const isAnimatingRef = useRef(false)
+  const pendingDealRef = useRef<DiceRollResult | null>(null)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const gameStateRef = useRef<GameState | null>(null)
   gameStateRef.current = gameState
@@ -118,6 +139,11 @@ export default function GamePage() {
           if (step >= total) {
             setAnimPos(null)
             isAnimatingRef.current = false
+            // Trigger deal flow if landed on a deal sector
+            if (result.sectorType === 'deal') {
+              pendingDealRef.current = result
+              setShowDealSelection(true)
+            }
           } else {
             const t = setTimeout(doStep, STEP_MS)
             timersRef.current.push(t)
@@ -141,6 +167,94 @@ export default function GamePage() {
 
   const handleRollRequest = useCallback((_count: number) => {
     rollDice(roomId, sdkPlayerId)
+  }, [roomId, sdkPlayerId])
+
+  function mapDtoToCard(dto: CardDto): FinGuruDealCard {
+    return {
+      id: dto.id,
+      name: dto.name,
+      description: dto.description,
+      amount: dto.amount,
+      headerLabel: dto.headerLabel || undefined,
+      details: dto.details.map(d => ({
+        name: d.name,
+        amount: d.value ? d.value : d.amount,
+        negative: d.isNegative,
+      })),
+    }
+  }
+
+  // ─── Deal flow handlers ────────────────────────────────────────
+
+  const handleDealSelect = useCallback(async (type: DealType) => {
+    setShowDealSelection(false)
+    setCurrentDealType(type)
+    setDealLoading(true)
+    setDealError(null)
+
+    try {
+      let cardDto: CardDto
+      if (type === 'big') {
+        const cards = await getBigDealCards()
+        if (cards.length === 0) throw new Error('Нет доступных крупных сделок')
+        cardDto = cards[Math.floor(Math.random() * cards.length)]
+      } else {
+        const cards = await getSmallDealCards()
+        if (cards.length === 0) throw new Error('Нет доступных мелких сделок')
+        cardDto = cards[Math.floor(Math.random() * cards.length)]
+      }
+
+      setCurrentDealCard(mapDtoToCard(cardDto))
+      setShowDealCard(true)
+    } catch (e) {
+      setDealError(e instanceof Error ? e.message : 'Ошибка загрузки карты')
+    } finally {
+      setDealLoading(false)
+    }
+  }, [])
+
+  const handleDealAccept = useCallback(() => {
+    if (!currentDealCard || !pendingDealRef.current) return
+
+    const result = pendingDealRef.current
+    const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
+
+    setMoveHistory(prev => [{
+      playerName: rolledPlayer?.displayName ?? result.rolledBy,
+      playerColor: rolledPlayer?.color ?? '#999',
+      moveLabel: currentDealType === 'big' ? 'Крупная сделка' : 'Мелкая сделка',
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      transactionType: 'Покупка',
+      transactionTypeColor: 'rgb(52, 199, 89)',
+      action: `–${currentDealCard.amount}`,
+      actionColor: 'rgb(255, 59, 48)',
+      finances: [{
+        label: 'Наличные',
+        change: `–${currentDealCard.amount}`,
+        changeColor: 'rgb(255, 59, 48)',
+        result: `${(rolledPlayer?.cash ?? 0) - (typeof currentDealCard.amount === 'number' ? currentDealCard.amount : 0)}`,
+        resultColor: 'rgb(0, 0, 0)',
+      }],
+      dealCard: {
+        title: currentDealCard.name,
+        description: currentDealCard.description,
+        price: typeof currentDealCard.amount === 'number'
+          ? `${currentDealCard.amount.toLocaleString('ru-RU')} ₽`
+          : String(currentDealCard.amount),
+      },
+    }, ...prev])
+
+    buyDeal(roomId, sdkPlayerId, currentDealCard.id, currentDealType)
+    setShowDealCard(false)
+    setCurrentDealCard(null)
+    pendingDealRef.current = null
+  }, [currentDealCard, currentDealType, roomId, sdkPlayerId])
+
+  const handleDealSkip = useCallback(() => {
+    skipDeal(roomId, sdkPlayerId)
+    setShowDealCard(false)
+    setCurrentDealCard(null)
+    pendingDealRef.current = null
   }, [roomId, sdkPlayerId])
 
   const isMyTurn = gameState?.currentPlayerId === sdkPlayerId
@@ -245,6 +359,88 @@ export default function GamePage() {
         <DiceWidget
           onRoll={handleRollRequest}
           onClose={() => setShowDice(false)}
+        />
+      )}
+
+      {/* Deal selection modal */}
+      <DealSelectionModal
+        isOpen={showDealSelection}
+        onClose={() => {
+          setShowDealSelection(false)
+          pendingDealRef.current = null
+        }}
+        onSelect={handleDealSelect}
+      />
+
+      {/* Deal loading */}
+      {dealLoading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 18,
+        }}>
+          Загрузка карты...
+        </div>
+      )}
+
+      {/* Deal error */}
+      {dealError && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)',
+        }}>
+          <div style={{
+            background: '#fff', padding: 24, borderRadius: 16,
+            textAlign: 'center', maxWidth: 320,
+          }}>
+            <p style={{ margin: '0 0 16px', fontSize: 16 }}>{dealError}</p>
+            <button
+              onClick={() => setDealError(null)}
+              style={{
+                padding: '8px 24px', borderRadius: 8, border: 'none',
+                background: '#5E5CE6', color: '#fff', cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Deal card display */}
+      {currentDealType === 'big' ? (
+        <BigDealCard
+          name={currentDealCard?.name ?? ''}
+          description={currentDealCard?.description ?? ''}
+          amount={currentDealCard?.amount ?? 0}
+          headerLabel={currentDealCard?.headerLabel}
+          details={(currentDealCard?.details ?? []).map(d => ({
+            name: d.name,
+            amount: d.amount,
+            negative: d.negative,
+          }))}
+          rightAlign={!!currentDealCard?.headerLabel && currentDealCard.headerLabel.length <= 5}
+          isOpen={showDealCard && currentDealType === 'big'}
+          onClick={handleDealAccept}
+          onClose={handleDealSkip}
+        />
+      ) : (
+        <SmallDealCard
+          name={currentDealCard?.name ?? ''}
+          description={currentDealCard?.description ?? ''}
+          amount={currentDealCard?.amount ?? 0}
+          headerLabel={currentDealCard?.headerLabel}
+          details={(currentDealCard?.details ?? []).map(d => ({
+            name: d.name,
+            amount: d.amount,
+            negative: d.negative,
+          }))}
+          rightAlign={!!currentDealCard?.headerLabel && currentDealCard.headerLabel.length <= 5}
+          isOpen={showDealCard && currentDealType === 'small'}
+          onClick={handleDealAccept}
+          onClose={handleDealSkip}
         />
       )}
     </div>
