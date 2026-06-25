@@ -243,3 +243,14 @@ export function subscribeDealCardDrawn(
     if (msg.data?.roomId === roomId) cb(msg.data as DealCardDrawResult)
   })
 }
+
+// ─── Negative card protocol functions ──────────────────────────
+
+export function applyNegativeCard(
+  roomId: string,
+  playerId: string,
+  cardId: number,
+  amount: number
+): void {
+  postToParent('finguru.applyNegativeCard', { roomId, playerId, cardId, amount })
+}

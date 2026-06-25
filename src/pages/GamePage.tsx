@@ -10,6 +10,7 @@ import { dreams as defaultDreams } from '../data/dreams'
 import DealSelectionModal from '../components/dealSelection/DealSelectionModal'
 import BigDealCard from '../components/cards/BigDealCard'
 import SmallDealCard from '../components/cards/SmallDealCard'
+import NegativeCard from '../components/cards/NegativeCard'
 import {
   getGameState,
   rollDice,
@@ -21,11 +22,14 @@ import {
   type DealType,
   buyDeal,
   skipDeal,
+  applyNegativeCard,
 } from '../sdk'
 import {
   getBigDealCards,
   getSmallDealCards,
+  getRandomNegativeCard,
   type CardDto,
+  type NegativeCardDto,
 } from '../api/cards'
 import styles from './GamePage.module.css'
 
@@ -57,6 +61,12 @@ export default function GamePage() {
   const [showDealCard, setShowDealCard] = useState(false)
   const [dealLoading, setDealLoading] = useState(false)
   const [dealError, setDealError] = useState<string | null>(null)
+
+  // Negative card flow state
+  const [negativeCard, setNegativeCard] = useState<NegativeCardDto | null>(null)
+  const [showNegativeCard, setShowNegativeCard] = useState(false)
+  const [negativeLoading, setNegativeLoading] = useState(false)
+  const [negativeError, setNegativeError] = useState<string | null>(null)
 
   const isAnimatingRef = useRef(false)
   const pendingDealRef = useRef<DiceRollResult | null>(null)
@@ -143,6 +153,9 @@ export default function GamePage() {
             if (result.sectorType === 'deal') {
               pendingDealRef.current = result
               setShowDealSelection(true)
+            } else if (result.sectorType === 'negative') {
+              pendingDealRef.current = result
+              fetchNegativeCard()
             }
           } else {
             const t = setTimeout(doStep, STEP_MS)
@@ -256,6 +269,72 @@ export default function GamePage() {
     setCurrentDealCard(null)
     pendingDealRef.current = null
   }, [roomId, sdkPlayerId])
+
+  // ─── Negative card flow handlers ──────────────────────────────
+
+  const fetchNegativeCard = useCallback(async () => {
+    setNegativeLoading(true)
+    setNegativeError(null)
+    try {
+      const card = await getRandomNegativeCard()
+      if (!card) throw new Error('Ошибка загрузки карты')
+      setNegativeCard(card)
+      setShowNegativeCard(true)
+    } catch (e) {
+      setNegativeError(e instanceof Error ? e.message : 'Ошибка загрузки карты')
+    } finally {
+      setNegativeLoading(false)
+    }
+  }, [])
+
+  const handleNegativeAccept = useCallback(() => {
+    if (!negativeCard || !pendingDealRef.current) return
+
+    const result = pendingDealRef.current
+    const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
+
+    // Deduct cash locally
+    setGameState(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        players: prev.players.map(p =>
+          p.playerId === result.rolledBy
+            ? { ...p, cash: p.cash - negativeCard.amount }
+            : p
+        ),
+      }
+    })
+
+    // Record move in history
+    setMoveHistory(prev => [{
+      playerName: rolledPlayer?.displayName ?? result.rolledBy,
+      playerColor: rolledPlayer?.color ?? '#999',
+      moveLabel: 'Всячина',
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      transactionType: negativeCard.name,
+      transactionTypeColor: 'rgb(96, 96, 96)',
+      action: `–${negativeCard.amount}`,
+      actionColor: 'rgb(255, 59, 48)',
+      finances: [{
+        label: 'Наличные',
+        change: `–${negativeCard.amount}`,
+        changeColor: 'rgb(255, 59, 48)',
+        result: `${(rolledPlayer?.cash ?? 0) - negativeCard.amount}`,
+        resultColor: 'rgb(0, 0, 0)',
+      }],
+      dealCard: {
+        title: negativeCard.name,
+        description: negativeCard.description,
+        price: `${negativeCard.amount.toLocaleString('ru-RU')} ₽`,
+      },
+    }, ...prev])
+
+    applyNegativeCard(roomId, sdkPlayerId, negativeCard.id, negativeCard.amount)
+    setShowNegativeCard(false)
+    setNegativeCard(null)
+    pendingDealRef.current = null
+  }, [negativeCard, roomId, sdkPlayerId])
 
   const isMyTurn = gameState?.currentPlayerId === sdkPlayerId
 
@@ -408,6 +487,53 @@ export default function GamePage() {
           </div>
         </div>
       )}
+
+      {/* Negative card loading */}
+      {negativeLoading && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)', color: '#fff', fontSize: 18,
+        }}>
+          Загрузка карты...
+        </div>
+      )}
+
+      {/* Negative card error */}
+      {negativeError && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.5)',
+        }}>
+          <div style={{
+            background: '#fff', padding: 24, borderRadius: 16,
+            textAlign: 'center', maxWidth: 320,
+          }}>
+            <p style={{ margin: '0 0 16px', fontSize: 16 }}>{negativeError}</p>
+            <button
+              onClick={() => setNegativeError(null)}
+              style={{
+                padding: '8px 24px', borderRadius: 8, border: 'none',
+                background: '#5E5CE6', color: '#fff', cursor: 'pointer',
+                fontSize: 14,
+              }}
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Negative card */}
+      <NegativeCard
+        name={negativeCard?.name ?? ''}
+        description={negativeCard?.description ?? ''}
+        amount={negativeCard?.amount ?? 0}
+        isOpen={showNegativeCard}
+        onClick={handleNegativeAccept}
+        onClose={handleNegativeAccept}
+      />
 
       {/* Deal card display */}
       {currentDealType === 'big' ? (

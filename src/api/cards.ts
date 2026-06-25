@@ -40,3 +40,20 @@ export function getSmallDealCards(): Promise<CardDto[]> {
 export function getRandomSmallDealCard(): Promise<CardDto> {
   return fetchJson('/deals/small/random')
 }
+
+// ─── Negative cards ────────────────────────────────────────────
+
+export interface NegativeCardDto {
+  id: number
+  name: string
+  description: string
+  amount: number
+}
+
+export function getNegativeCards(): Promise<NegativeCardDto[]> {
+  return fetchJson('/negative')
+}
+
+export function getRandomNegativeCard(): Promise<NegativeCardDto> {
+  return fetchJson('/negative/random')
+}
