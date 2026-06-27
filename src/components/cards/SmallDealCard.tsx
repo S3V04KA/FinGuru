@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import styles from './SmallDealCard.module.css'
 import DealCardActions from './DealCardActions'
+import BiddingPanel from './BiddingPanel'
 
 interface Detail {
   name: string
@@ -39,6 +40,7 @@ type Tab = 'card' | 'actions'
 
 export default function SmallDealCard({ name, description, amount, details, onClick, onClose, onFinishTurn, isOpen, purchased, headerLabel = 'Цена', rightAlign = false, playerCash = 0, playerPassiveIncome = 0 }: SmallDealCardProps): ReactNode {
   const [tab, setTab] = useState<Tab>('card')
+  const [showBidding, setShowBidding] = useState(false)
 
   if (!isOpen) return null
 
@@ -76,6 +78,10 @@ export default function SmallDealCard({ name, description, amount, details, onCl
                   ))}
                 </div>
               </>
+            ) : showBidding ? (
+              <div className={styles.actionsContent}>
+                <BiddingPanel onCancel={() => setShowBidding(false)} />
+              </div>
             ) : (
               <div className={styles.actionsContent}>
                 <DealCardActions
@@ -86,6 +92,7 @@ export default function SmallDealCard({ name, description, amount, details, onCl
                   playerPassiveIncome={playerPassiveIncome}
                   onBuy={onClick}
                   onSkip={onClose}
+                  onStartBidding={() => setShowBidding(true)}
                 />
               </div>
             )}

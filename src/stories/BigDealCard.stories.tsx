@@ -9,9 +9,10 @@ const meta: Meta<typeof BigDealCard> = {
 export default meta
 type Story = StoryObj<typeof BigDealCard>
 
-export const Default: Story = {
+export const CardTab: Story = {
   args: {
     isOpen: true,
+    purchased: false,
     name: 'Многоквартирные дома на продажу',
     description: 'Продаются 2 дома, общее число квартир — 24. Владелец управлял ими с помощью проживающего тут же помощника. Причина продажи — отход от дел.',
     amount: 575000,
@@ -22,5 +23,21 @@ export const Default: Story = {
     ],
     onClick: () => alert('Куплено!'),
     onClose: () => alert('Закрыто'),
+    onFinishTurn: () => alert('Ход завершён'),
+  },
+}
+
+export const Purchased: Story = {
+  args: {
+    ...CardTab.args,
+    purchased: true,
+  },
+}
+
+export const ActionsTab: Story = {
+  args: {
+    ...CardTab.args,
+    playerCash: 500000,
+    playerPassiveIncome: 2000,
   },
 }

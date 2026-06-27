@@ -1,0 +1,72 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  height: 100%;
+}
+
+.title {
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  color: rgba(0, 0, 0, 0.85);
+  margin: 0;
+  align-self: flex-start;
+}
+
+.infoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
+.noOffers {
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  color: rgba(0, 0, 0, 0.85);
+  margin: 0;
+  text-align: center;
+}
+
+.waitMessage {
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  color: rgba(0, 0, 0, 0.5);
+  margin: 0;
+  text-align: center;
+}
+
+.cancelButton {
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: #FF383C;
+  background: rgba(255, 56, 60, 0.1);
+  border: 0.5px solid rgba(255, 56, 60, 0.3);
+  border-radius: 26px;
+  padding: 8px 16px;
+  width: 100%;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cancelButton:hover {
+  opacity: 0.8;
+}
+
+.cancelButton:active {
+  opacity: 0.6;
+}

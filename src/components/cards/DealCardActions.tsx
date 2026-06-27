@@ -15,6 +15,7 @@ interface DealCardActionsProps {
   playerPassiveIncome: number
   onBuy: () => void
   onSkip: () => void
+  onStartBidding: () => void
 }
 
 function formatCurrency(value: number | string): string {
@@ -29,7 +30,7 @@ function findCashFlow(details: DealCardActionDetail[]): number {
   return cf && typeof cf.amount === 'number' ? cf.amount : 0
 }
 
-export default function DealCardActions({ dealType, amount, details, playerCash, playerPassiveIncome, onBuy, onSkip }: DealCardActionsProps): ReactNode {
+export default function DealCardActions({ dealType, amount, details, playerCash, playerPassiveIncome, onBuy, onSkip, onStartBidding }: DealCardActionsProps): ReactNode {
   const price = typeof amount === 'number' ? amount : 0
   const cashFlow = findCashFlow(details)
   const newCash = playerCash - price
@@ -76,7 +77,7 @@ export default function DealCardActions({ dealType, amount, details, playerCash,
 
       <div className={styles.actionRow}>
         <button className={styles.outlineButton}>Выставить цену</button>
-        <button className={styles.outlineButton}>Сделать торги</button>
+        <button className={styles.outlineButton} onClick={onStartBidding}>Сделать торги</button>
       </div>
 
       <button className={styles.skipButton} onClick={onSkip}>
