@@ -5,7 +5,8 @@ import Dashboard from '../components/Dashboard'
 import GameBoard from '../components/GameBoard'
 import MoveHistory from '../components/MoveHistory'
 import DiceWidget from '../components/DiceWidget'
-import { icons, roleData, roleNames } from '../data/roles'
+import { icons, roleNames } from '../data/roles'
+import { getRoleFull, type RoleFullDto } from '../api/roles'
 import { dreams as defaultDreams } from '../data/dreams'
 import DealSelectionModal from '../components/dealSelection/DealSelectionModal'
 import BigDealCard from '../components/cards/BigDealCard'
@@ -63,12 +64,22 @@ function categorizeCard(type: DealType, name: string): AssetCategory {
 export default function GamePage() {
   const navigate = useNavigate()
   const { roleName } = useParams<{ roleName: string }>()
-  const data = roleName ? roleData[roleName] : undefined
   const { currentPlayerId: contextPlayerId } = useGame()
 
   const params = new URLSearchParams(window.location.search)
   const roomId = params.get('roomId') ?? ''
   const sdkPlayerId = params.get('playerId') ?? contextPlayerId ?? ''
+
+  const [serverRole, setServerRole] = useState<RoleFullDto | null>(null)
+  const [roleLoading, setRoleLoading] = useState(true)
+
+  useEffect(() => {
+    if (!roleName) return
+    getRoleFull(roleName).then(role => {
+      setServerRole(role)
+      setRoleLoading(false)
+    }).catch(() => setRoleLoading(false))
+  }, [roleName])
 
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [myColor, setMyColor] = useState<string>('#4CAF50')
@@ -481,7 +492,8 @@ export default function GamePage() {
 
   const isMyTurn = gameState?.currentPlayerId === sdkPlayerId
 
-  if (!data) return <p>Роль не найдена</p>
+  if (roleLoading) return <p>Загрузка...</p>
+  if (!serverRole) return <p>Роль не найдена</p>
 
   const me = gameState?.players.find(p => p.playerId === sdkPlayerId)
   const myDream = me?.dreamId != null ? defaultDreams.find(d => d.id === me.dreamId) : null
@@ -489,13 +501,13 @@ export default function GamePage() {
 
   const dashboardPlayer = me ?? {
     playerId: sdkPlayerId,
-    displayName: data.name,
+    displayName: serverRole.displayName,
     roleId: roleName ?? '',
     color: myColor,
     dreamId: null,
     cash: 0,
-    income: data.financialData.income.total,
-    expenses: data.financialData.expenses.total,
+    income: serverRole.income,
+    expenses: serverRole.expenses,
     passiveIncome: 0,
     position: myPosition,
     skipNextTurn: false,
@@ -506,14 +518,14 @@ export default function GamePage() {
   }
 
   const incomeItems: FinancialDetail[] = [
-    ...(data.financialData.income.items ?? []),
+    ...(serverRole.incomeItems.map(i => ({ name: i.name, amount: i.amount })) ?? []),
     ...purchasedAssets
       .filter(a => a.category !== 'stock')
       .map(a => ({ name: a.name, amount: a.cashFlow })),
   ]
 
   const expenseItems: FinancialDetail[] = [
-    ...(data.financialData.expenses.items ?? []),
+    ...(serverRole.expenseItems.map(i => ({ name: i.name, amount: i.amount })) ?? []),
   ]
 
   const smallCirclePlayers = (gameState?.players ?? [])
@@ -549,7 +561,7 @@ export default function GamePage() {
       <div className={styles.dashboardColumn}>
         <Dashboard
           playerName={dashboardPlayer.displayName}
-          playerRole={data.name}
+          playerRole={serverRole.displayName}
           moveNumber={gameState?.turnCount ?? 0}
           stats={{
             cash: dashboardPlayer.cash,
