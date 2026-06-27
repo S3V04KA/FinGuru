@@ -136,30 +136,14 @@ export default function GamePage() {
       playerNameMapRef.current[p.playerId] = p.displayName
     }
 
-    // Calculate actual cash change (parent may send 0 for salary)
-    let cashChange = result.cashChange
-    let newCash = result.newCash
-    if (result.sectorType === 'salary') {
-      const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
-      if (rolledPlayer) {
-        cashChange = rolledPlayer.income
-        newCash = rolledPlayer.cash + rolledPlayer.income
-      }
-    }
-
     setGameState(prev => {
       if (!prev) return prev
       const mergedPlayers = result.players.map(p => {
         const localP = prev.players.find(lp => lp.playerId === p.playerId)
-        const updatedP = {
+        return {
           ...p,
           passiveIncome: localP?.passiveIncome ?? p.passiveIncome ?? 0,
         }
-        // Apply salary locally if needed
-        if (result.sectorType === 'salary' && p.playerId === result.rolledBy) {
-          updatedP.cash = newCash
-        }
-        return updatedP
       })
       return {
         ...prev,
@@ -176,13 +160,13 @@ export default function GamePage() {
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
       transactionType: result.sectorLabel,
       transactionTypeColor: getSectorColor(result.sectorType),
-      action: cashChange >= 0 ? `+${cashChange}` : `${cashChange}`,
-      actionColor: cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
+      action: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
+      actionColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
       finances: [{
         label: 'Наличные',
-        change: cashChange >= 0 ? `+${cashChange}` : `${cashChange}`,
-        changeColor: cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
-        result: `${newCash}`,
+        change: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
+        changeColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
+        result: `${result.newCash}`,
         resultColor: 'rgb(0, 0, 0)',
       }],
     }, ...prev])
