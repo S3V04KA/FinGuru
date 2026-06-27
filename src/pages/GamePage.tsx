@@ -276,7 +276,7 @@ export default function GamePage() {
     const cashFlowAmount = typeof cashFlowDetail?.amount === 'number' ? cashFlowDetail.amount : 0
 
     // Update passive income locally
-    const newPassiveIncome = myPassiveIncome + cashFlowAmount
+    const newPassiveIncome = passiveIncome + cashFlowAmount
     setPassiveIncome(newPassiveIncome)
     setGameState(prev => {
       if (!prev) return prev
@@ -319,7 +319,7 @@ export default function GamePage() {
     setShowDealCard(false)
     setCurrentDealCard(null)
     pendingDealRef.current = null
-  }, [currentDealCard, currentDealType, roomId, sdkPlayerId, myPassiveIncome])
+  }, [currentDealCard, currentDealType, roomId, sdkPlayerId, passiveIncome])
 
   const handleDealSkip = useCallback(() => {
     skipDeal(roomId, sdkPlayerId)
@@ -402,8 +402,6 @@ export default function GamePage() {
   const myDream = me?.dreamId != null ? defaultDreams.find(d => d.id === me.dreamId) : null
   const myPosition = animPos !== null ? animPos : (me?.position ?? 0)
 
-  const myPassiveIncome = me?.passiveIncome ?? passiveIncome
-
   const dashboardPlayer = me ?? {
     playerId: sdkPlayerId,
     displayName: data.name,
@@ -461,11 +459,11 @@ export default function GamePage() {
             cash: dashboardPlayer.cash,
             salary: dashboardPlayer.income,
             expenses: dashboardPlayer.expenses,
-            passiveIncome: myPassiveIncome,
+            passiveIncome: me?.passiveIncome ?? passiveIncome,
             cashFlow: dashboardPlayer.income - dashboardPlayer.expenses,
           }}
           goalTarget={dashboardPlayer.expenses}
-          progressAmount={myPassiveIncome}
+          progressAmount={me?.passiveIncome ?? passiveIncome}
           statuses={[]}
           assetCategories={[]}
           icon={icons[`/src/assets/roles/${roleName}.svg`]}
