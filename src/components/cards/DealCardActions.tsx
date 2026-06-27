@@ -16,6 +16,9 @@ interface DealCardActionsProps {
   onBuy: () => void
   onSkip: () => void
   onStartBidding: () => void
+  creditAmount?: number
+  creditCashFlowReduction?: number
+  onTakeCredit?: () => void
 }
 
 function formatCurrency(value: number | string): string {
@@ -30,12 +33,13 @@ function findCashFlow(details: DealCardActionDetail[]): number {
   return cf && typeof cf.amount === 'number' ? cf.amount : 0
 }
 
-export default function DealCardActions({ dealType, amount, details, playerCash, playerPassiveIncome, onBuy, onSkip, onStartBidding }: DealCardActionsProps): ReactNode {
+export default function DealCardActions({ dealType, amount, details, playerCash, playerPassiveIncome, onBuy, onSkip, onStartBidding, creditAmount = 0, creditCashFlowReduction = 0, onTakeCredit }: DealCardActionsProps): ReactNode {
   const price = typeof amount === 'number' ? amount : 0
   const cashFlow = findCashFlow(details)
   const newCash = playerCash - price
   const newPassiveIncome = playerPassiveIncome + cashFlow
   const title = dealType === 'big' ? 'Крупная сделка' : 'Мелкая сделка'
+  const canTakeCredit = creditAmount > 0 && playerCash >= creditAmount
 
   return (
     <div className={styles.container}>
@@ -64,6 +68,16 @@ export default function DealCardActions({ dealType, amount, details, playerCash,
           Купить за {formatCurrency(price)}
         </button>
       </div>
+
+      {canTakeCredit && (
+        <div className={styles.creditSection}>
+          <p className={styles.creditTitle}>Доступен кредит {formatCurrency(creditAmount)}</p>
+          <p className={styles.creditNote}>Денежный поток сократится на {formatCurrency(creditCashFlowReduction)}</p>
+          <button className={styles.creditButton} onClick={onTakeCredit}>
+            Взять кредит
+          </button>
+        </div>
+      )}
 
       <div className={styles.divider} />
 

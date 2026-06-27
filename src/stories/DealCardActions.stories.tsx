@@ -59,3 +59,30 @@ export const NotEnoughCash: Story = {
     onStartBidding: () => alert('Торги начаты'),
   },
 }
+
+export const WithCredit: Story = {
+  args: {
+    dealType: 'small',
+    amount: 50000,
+    details: [
+      { name: 'Ипотека', amount: 45000, negative: true },
+      { name: 'Первый взнос', amount: 5000, negative: true },
+      { name: 'Денежный поток', amount: 100, negative: false },
+    ],
+    playerCash: 200000,
+    playerPassiveIncome: 1000,
+    creditAmount: 10000,
+    creditCashFlowReduction: 1000,
+    onBuy: () => alert('Куплено!'),
+    onSkip: () => alert('Пропущено'),
+    onStartBidding: () => alert('Торги начаты'),
+    onTakeCredit: () => alert('Кредит взят'),
+  },
+}
+
+export const CreditHiddenNoCash: Story = {
+  args: {
+    ...WithCredit.args,
+    playerCash: 5000,
+  },
+}

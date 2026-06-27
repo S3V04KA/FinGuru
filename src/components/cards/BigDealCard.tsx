@@ -38,9 +38,21 @@ function formatDetail(value: number | string, negative: boolean): string {
 
 type Tab = 'card' | 'actions'
 
+function findCreditAmount(details: Detail[]): number {
+  const mortgage = details.find(d => d.name === 'Ипотека')
+  return mortgage && typeof mortgage.amount === 'number' ? Math.abs(mortgage.amount) : 0
+}
+
+function findCreditReduction(details: Detail[]): number {
+  const cf = details.find(d => !d.negative && (d.name === 'Денежный поток' || d.name.includes('Доход')))
+  return cf && typeof cf.amount === 'number' ? Math.round(Math.abs(cf.amount) * 0.3) : 0
+}
+
 export default function BigDealCard({ name, description, amount, details, onClick, onClose, onFinishTurn, isOpen, purchased, headerLabel = 'Цена', rightAlign = false, playerCash = 0, playerPassiveIncome = 0 }: BigDealCardProps): ReactNode {
   const [tab, setTab] = useState<Tab>('card')
   const [showBidding, setShowBidding] = useState(false)
+  const creditAmount = findCreditAmount(details)
+  const creditReduction = findCreditReduction(details)
 
   if (!isOpen) return null
 
@@ -93,6 +105,8 @@ export default function BigDealCard({ name, description, amount, details, onClic
                   onBuy={onClick}
                   onSkip={onClose}
                   onStartBidding={() => setShowBidding(true)}
+                  creditAmount={creditAmount}
+                  creditCashFlowReduction={creditReduction}
                 />
               </div>
             )}
