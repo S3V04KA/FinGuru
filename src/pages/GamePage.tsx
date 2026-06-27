@@ -99,6 +99,7 @@ export default function GamePage() {
   const [showDealCard, setShowDealCard] = useState(false)
   const [dealLoading, setDealLoading] = useState(false)
   const [dealError, setDealError] = useState<string | null>(null)
+  const [showSuccess, setShowSuccess] = useState(false)
 
   // Negative card flow state
   const [negativeCard, setNegativeCard] = useState<NegativeCardDto | null>(null)
@@ -396,10 +397,15 @@ export default function GamePage() {
     })
 
     buyDeal(roomId, sdkPlayerId, currentDealCard.id, currentDealType)
+    setShowSuccess(true)
+  }, [currentDealCard, currentDealType, roomId, sdkPlayerId, passiveIncome])
+
+  const handleFinishTurn = useCallback(() => {
     setShowDealCard(false)
     setCurrentDealCard(null)
+    setShowSuccess(false)
     pendingDealRef.current = null
-  }, [currentDealCard, currentDealType, roomId, sdkPlayerId, passiveIncome])
+  }, [])
 
   const handleDealSkip = useCallback(() => {
     skipDeal(roomId, sdkPlayerId)
@@ -710,6 +716,10 @@ export default function GamePage() {
           isOpen={showDealCard && currentDealType === 'big'}
           onClick={handleDealAccept}
           onClose={handleDealSkip}
+          onFinishTurn={handleFinishTurn}
+          purchased={showSuccess}
+          playerCash={me?.cash ?? 0}
+          playerPassiveIncome={passiveIncome}
         />
       ) : (
         <SmallDealCard
@@ -726,6 +736,10 @@ export default function GamePage() {
           isOpen={showDealCard && currentDealType === 'small'}
           onClick={handleDealAccept}
           onClose={handleDealSkip}
+          onFinishTurn={handleFinishTurn}
+          purchased={showSuccess}
+          playerCash={me?.cash ?? 0}
+          playerPassiveIncome={passiveIncome}
         />
       )}
     </div>
