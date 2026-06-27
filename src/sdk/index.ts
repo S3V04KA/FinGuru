@@ -31,6 +31,8 @@ function postToParent(type: string, payload: Record<string, unknown>): void {
 type FinguruHandler = (msg: { type: string; data: any }) => void
 const typeHandlers = new Map<string, Set<FinguruHandler>>()
 let globalListenerInstalled = false
+const recentTypes = new Map<string, number>()
+const DEDUP_WINDOW_MS = 200
 
 function installGlobalListener(): void {
   if (globalListenerInstalled) return
@@ -41,6 +43,12 @@ function installGlobalListener(): void {
     const innerType: string | undefined = payload?.type
     const innerData: any = payload?.data
     if (!innerType) return
+
+    const now = Date.now()
+    const last = recentTypes.get(innerType) ?? 0
+    if (now - last < DEDUP_WINDOW_MS) return
+    recentTypes.set(innerType, now)
+
     const set = typeHandlers.get(innerType)
     if (set) set.forEach(h => h({ type: innerType, data: innerData }))
   })
