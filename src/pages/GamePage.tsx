@@ -12,6 +12,7 @@ import DealSelectionModal from '../components/dealSelection/DealSelectionModal'
 import BigDealCard from '../components/cards/BigDealCard'
 import SmallDealCard from '../components/cards/SmallDealCard'
 import NegativeCard from '../components/cards/NegativeCard'
+import Toast from '../components/Toast'
 import {
   getGameState,
   rollDice,
@@ -106,6 +107,7 @@ export default function GamePage() {
   const [showNegativeCard, setShowNegativeCard] = useState(false)
   const [negativeLoading, setNegativeLoading] = useState(false)
   const [negativeError, setNegativeError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
 
   const isAnimatingRef = useRef(false)
   const pendingDealRef = useRef<DiceRollResult | null>(null)
@@ -326,34 +328,54 @@ export default function GamePage() {
     }
   }, [])
 
+  function findCardCreditAmount(): number {
+    if (!currentDealCard) return 0
+    const mortgage = currentDealCard.details.find(d => d.name === 'Ипотека')
+    return mortgage && typeof mortgage.amount === 'number' ? Math.abs(mortgage.amount) : 0
+  }
+
+  function findCardCashFlow(): number {
+    if (!currentDealCard) return 0
+    const cf = currentDealCard.details.find(
+      d => !d.negative && (d.name === 'Денежный поток' || d.name.includes('Доход'))
+    )
+    return cf && typeof cf.amount === 'number' ? cf.amount : 0
+  }
+
   const handleDealAccept = useCallback(() => {
     if (!currentDealCard || !pendingDealRef.current) return
 
     const result = pendingDealRef.current
     const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
 
-    // Find cash flow from deal card details
-    const cashFlowDetail = currentDealCard.details.find(
-      d => !d.negative && (d.name === 'Денежный поток' || d.name.includes('Доход'))
-    )
-    const cashFlowAmount = typeof cashFlowDetail?.amount === 'number' ? cashFlowDetail.amount : 0
+    const cashFlowAmount = findCardCashFlow()
+    const dealAmount = typeof currentDealCard.amount === 'number' ? currentDealCard.amount : 0
+
+    if ((rolledPlayer?.cash ?? 0) < dealAmount) {
+      setToastMessage('Недостаточно средств для покупки')
+      return
+    }
 
     // Update passive income locally
     const newPassiveIncome = passiveIncome + cashFlowAmount
     setPassiveIncome(newPassiveIncome)
+
+    // Deduct cash and update passive income in gameState
     setGameState(prev => {
       if (!prev) return prev
       return {
         ...prev,
         players: prev.players.map(p =>
           p.playerId === result.rolledBy
-            ? { ...p, passiveIncome: newPassiveIncome }
+            ? {
+                ...p,
+                cash: (p.cash ?? 0) - dealAmount,
+                passiveIncome: newPassiveIncome,
+              }
             : p
         ),
       }
     })
-
-    const dealAmount = typeof currentDealCard.amount === 'number' ? currentDealCard.amount : 0
 
     const entry = {
       playerName: getPlayerName(result.rolledBy),
@@ -399,6 +421,50 @@ export default function GamePage() {
     buyDeal(roomId, sdkPlayerId, currentDealCard.id, currentDealType)
     setShowSuccess(true)
   }, [currentDealCard, currentDealType, roomId, sdkPlayerId, passiveIncome])
+
+  const handleTakeCredit = useCallback(() => {
+    if (!pendingDealRef.current) return
+    const result = pendingDealRef.current
+    const creditAmount = findCardCreditAmount()
+    const creditReduction = Math.round(findCardCashFlow() * 0.3)
+    if (creditAmount <= 0) return
+
+    setGameState(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        players: prev.players.map(p =>
+          p.playerId === result.rolledBy
+            ? { ...p, cash: (p.cash ?? 0) + creditAmount }
+            : p
+        ),
+      }
+    })
+
+    const entry = {
+      playerName: getPlayerName(result.rolledBy),
+      playerColor: result.players.find(p => p.playerId === result.rolledBy)?.color ?? '#999',
+      moveLabel: 'Кредит',
+      time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
+      transactionType: 'Кредит',
+      transactionTypeColor: 'rgb(255, 141, 40)',
+      action: `+${creditAmount}`,
+      actionColor: 'rgb(52, 199, 89)',
+      finances: [{
+        label: 'Наличные',
+        change: `+${creditAmount}`,
+        changeColor: 'rgb(52, 199, 89)',
+        result: `${(result.players.find(p => p.playerId === result.rolledBy)?.cash ?? 0) + creditAmount}`,
+        resultColor: 'rgb(0, 0, 0)',
+      }],
+    }
+
+    setMoveHistory(prev => [entry, ...prev])
+    setShowDealCard(false)
+    setCurrentDealCard(null)
+    setShowSuccess(false)
+    pendingDealRef.current = null
+  }, [roomId, sdkPlayerId, currentDealCard])
 
   const handleFinishTurn = useCallback(() => {
     setShowDealCard(false)
@@ -720,6 +786,7 @@ export default function GamePage() {
           purchased={showSuccess}
           playerCash={me?.cash ?? 0}
           playerPassiveIncome={passiveIncome}
+          onTakeCredit={handleTakeCredit}
         />
       ) : (
         <SmallDealCard
@@ -740,8 +807,15 @@ export default function GamePage() {
           purchased={showSuccess}
           playerCash={me?.cash ?? 0}
           playerPassiveIncome={passiveIncome}
+          onTakeCredit={handleTakeCredit}
         />
       )}
+
+      <Toast
+        message={toastMessage ?? ''}
+        visible={toastMessage !== null}
+        onClose={() => setToastMessage(null)}
+      />
     </div>
   )
 }

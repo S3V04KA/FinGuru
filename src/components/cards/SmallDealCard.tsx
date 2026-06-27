@@ -23,6 +23,7 @@ interface SmallDealCardProps {
   rightAlign?: boolean
   playerCash?: number
   playerPassiveIncome?: number
+  onTakeCredit?: () => void
 }
 
 function formatAmount(value: number | string): string {
@@ -48,7 +49,7 @@ function findCreditReduction(details: Detail[]): number {
   return cf && typeof cf.amount === 'number' ? Math.round(Math.abs(cf.amount) * 0.3) : 0
 }
 
-export default function SmallDealCard({ name, description, amount, details, onClick, onClose, onFinishTurn, isOpen, purchased, headerLabel = 'Цена', rightAlign = false, playerCash = 0, playerPassiveIncome = 0 }: SmallDealCardProps): ReactNode {
+export default function SmallDealCard({ name, description, amount, details, onClick, onClose, onFinishTurn, isOpen, purchased, headerLabel = 'Цена', rightAlign = false, playerCash = 0, playerPassiveIncome = 0, onTakeCredit }: SmallDealCardProps): ReactNode {
   const [tab, setTab] = useState<Tab>('card')
   const [showBidding, setShowBidding] = useState(false)
   const creditAmount = findCreditAmount(details)
@@ -107,6 +108,7 @@ export default function SmallDealCard({ name, description, amount, details, onCl
                   onStartBidding={() => setShowBidding(true)}
                   creditAmount={creditAmount}
                   creditCashFlowReduction={creditReduction}
+                  onTakeCredit={onTakeCredit}
                 />
               </div>
             )}
