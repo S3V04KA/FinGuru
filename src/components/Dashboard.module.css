@@ -179,6 +179,19 @@
   color: rgb(255, 255, 255);
 }
 
+.incomeSection,
+.expensesSection,
+.assetsSection {
+  padding: 0 4px;
+}
+
+.separator {
+  height: 0;
+  border: none;
+  border-top: 1px solid rgb(229, 229, 234);
+  margin: 0 12px;
+}
+
 .goalSection {
   display: flex;
   flex-direction: column;

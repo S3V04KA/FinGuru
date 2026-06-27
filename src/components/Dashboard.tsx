@@ -3,6 +3,11 @@ import styles from './Dashboard.module.css'
 import ProgressBar from './ProgressBar'
 import DashboardHeader from './DashboardHeader'
 import { formatCurrency } from '../utils/format'
+import AssetsSection from './AssetsSection'
+import IncomeSection from './IncomeSection'
+import ExpensesSection from './ExpensesSection'
+import type { PurchasedAsset } from '../sdk'
+import type { FinancialDetail } from '../pages/GamePage'
 
 export interface DashboardStats {
   cash: number
@@ -39,6 +44,9 @@ export interface DashboardProps {
   progressAmount: number
   statuses: DashboardStatus[]
   assetCategories: AssetCategory[]
+  assets?: PurchasedAsset[]
+  incomeItems?: FinancialDetail[]
+  expenseItems?: FinancialDetail[]
   icon?: string
 }
 
@@ -98,7 +106,8 @@ function AssetCategoryCard({ category, defaultExpanded }: { category: AssetCateg
 
 export default function Dashboard({
   playerName, playerRole, moveNumber, stats,
-  goalTarget, progressAmount, statuses, assetCategories, icon,
+  goalTarget, progressAmount, statuses, assetCategories, assets,
+  incomeItems, expenseItems, icon,
 }: DashboardProps) {
   return (
     <div className={styles.container}>
@@ -126,7 +135,11 @@ export default function Dashboard({
         </div>
       </div>
 
+      <hr className={styles.separator} />
+
       <ProgressBar goalAmount={goalTarget} progressAmount={progressAmount} />
+
+      <hr className={styles.separator} />
 
       <div className={styles.statusSection}>
         {statuses.map((s, i) => (
@@ -137,10 +150,29 @@ export default function Dashboard({
         ))}
       </div>
 
+      <hr className={styles.separator} />
+
       <div className={styles.assetsSection}>
-        {assetCategories.map((cat, i) => (
-          <AssetCategoryCard key={i} category={cat} defaultExpanded={i === 0} />
-        ))}
+        <AssetsSection assets={(assets ?? []).filter(a => a.category === 'stock')} />
+      </div>
+
+      <hr className={styles.separator} />
+
+      <div className={styles.incomeSection}>
+        <IncomeSection
+          incomeItems={incomeItems ?? []}
+          passiveIncome={stats.passiveIncome}
+          cashFlow={stats.cashFlow}
+        />
+      </div>
+
+      <hr className={styles.separator} />
+
+      <div className={styles.expensesSection}>
+        <ExpensesSection
+          expenseItems={expenseItems ?? []}
+          totalExpenses={stats.expenses}
+        />
       </div>
     </div>
   )

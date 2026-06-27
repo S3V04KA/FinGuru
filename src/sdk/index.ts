@@ -258,12 +258,22 @@ export function applyNegativeCard(
 
 // ─── Persistence (save/load game data) ──────────────────────────
 
+export type AssetCategory = 'stock' | 'realEstate' | 'business' | 'partnership' | 'land' | 'other'
+
+export interface AssetDetail {
+  name: string
+  amount: number
+  isNegative: boolean
+}
+
 export interface PurchasedAsset {
   cardId: number
   type: DealType
   name: string
   amount: number
   cashFlow: number
+  category: AssetCategory
+  details: AssetDetail[]
 }
 
 export interface SavedHistoryEntry {

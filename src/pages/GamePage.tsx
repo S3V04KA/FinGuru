@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import Dashboard, { type AssetCategory } from '../components/Dashboard'
+import Dashboard from '../components/Dashboard'
 import GameBoard from '../components/GameBoard'
 import MoveHistory from '../components/MoveHistory'
 import DiceWidget from '../components/DiceWidget'
@@ -20,6 +20,8 @@ import {
   type DiceRollResult,
   type FinGuruDealCard,
   type DealType,
+  type AssetCategory,
+  type AssetDetail,
   buyDeal,
   skipDeal,
   applyNegativeCard,
@@ -38,6 +40,25 @@ import {
 import styles from './GamePage.module.css'
 
 const STEP_MS = 350
+
+export interface FinancialDetail {
+  name: string
+  amount: number
+}
+
+function categorizeCard(type: DealType, name: string): AssetCategory {
+  if (type === 'small') return 'stock'
+  const lower = name.toLowerCase()
+  if (lower.includes('дом') || lower.includes('квартир') || lower.includes('плекс') ||
+      lower.includes('пансионат') || lower.includes('земли') || lower.includes('пассаж') ||
+      lower.includes('многоквартир'))
+    return 'realEstate'
+  if (lower.includes('предприятие') || lower.includes('франшиза') || lower.includes('пиццери') ||
+      lower.includes('автомойк') || lower.includes('прачечн') || lower.includes('телефон'))
+    return 'business'
+  if (lower.includes('партнер')) return 'partnership'
+  return 'other'
+}
 
 export default function GamePage() {
   const navigate = useNavigate()
@@ -224,11 +245,36 @@ export default function GamePage() {
   // Load saved game data on mount
   useEffect(() => {
     loadGameData().then(saved => {
-      if (saved?.assets) setPurchasedAssets(saved.assets)
+      if (saved?.assets) {
+        const normalized: PurchasedAsset[] = saved.assets.map(a => ({
+          cardId: a.cardId,
+          type: a.type,
+          name: a.name,
+          amount: a.amount,
+          cashFlow: a.cashFlow,
+          category: (a as PurchasedAsset).category ?? categorizeCard(a.type, a.name),
+          details: (a as PurchasedAsset).details ?? [],
+        }))
+        setPurchasedAssets(normalized)
+
+        const totalPassive = normalized.reduce((s, a) => s + a.cashFlow, 0)
+        setPassiveIncome(totalPassive)
+        setGameState(prev => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            players: prev.players.map(p =>
+              p.playerId === sdkPlayerId
+                ? { ...p, passiveIncome: totalPassive }
+                : p
+            ),
+          }
+        })
+      }
       if (saved?.moveHistory) setMoveHistory(saved.moveHistory)
       isLoadedRef.current = true
     })
-  }, [])
+  }, [sdkPlayerId])
 
   // Auto-save whenever assets or move history change
   useEffect(() => {
@@ -338,12 +384,18 @@ export default function GamePage() {
 
     setMoveHistory(prev => [entry, ...prev])
     setPurchasedAssets(prev => {
-      const newAssets = [...prev, {
+      const newAssets: PurchasedAsset[] = [...prev, {
         cardId: currentDealCard.id,
         type: currentDealType,
         name: currentDealCard.name,
         amount: dealAmount,
         cashFlow: cashFlowAmount,
+        category: categorizeCard(currentDealType, currentDealCard.name),
+        details: currentDealCard.details.map(d => ({
+          name: d.name,
+          amount: typeof d.amount === 'number' ? d.amount : 0,
+          isNegative: d.negative,
+        })),
       }]
       return newAssets
     })
@@ -453,6 +505,17 @@ export default function GamePage() {
     return (p.passiveIncome ?? 0) > p.expenses
   }
 
+  const incomeItems: FinancialDetail[] = [
+    ...(data.financialData.income.items ?? []),
+    ...purchasedAssets
+      .filter(a => a.category !== 'stock')
+      .map(a => ({ name: a.name, amount: a.cashFlow })),
+  ]
+
+  const expenseItems: FinancialDetail[] = [
+    ...(data.financialData.expenses.items ?? []),
+  ]
+
   const smallCirclePlayers = (gameState?.players ?? [])
     .filter(p => !reachedBigCircle(p))
     .map(p => ({
@@ -498,7 +561,10 @@ export default function GamePage() {
           goalTarget={dashboardPlayer.expenses}
           progressAmount={me?.passiveIncome ?? passiveIncome}
           statuses={[]}
-          assetCategories={buildAssetCategories(purchasedAssets)}
+          assetCategories={[]}
+          assets={purchasedAssets}
+          incomeItems={incomeItems}
+          expenseItems={expenseItems}
           icon={icons[`/src/assets/roles/${roleName}.svg`]}
         />
       </div>
@@ -661,33 +727,6 @@ export default function GamePage() {
       )}
     </div>
   )
-}
-
-function buildAssetCategories(assets: PurchasedAsset[]): AssetCategory[] {
-  if (assets.length === 0) return []
-  const totalValue = assets.reduce((sum, a) => sum + (typeof a.amount === 'number' ? a.amount : 0), 0)
-  return [{
-    title: 'Активы',
-    summary: {
-      count: `${assets.length} шт`,
-      totalValue: `${totalValue.toLocaleString('ru-RU')} ₽`,
-    },
-    itemCount: assets.length,
-    rows: [
-      {
-        label: 'Название',
-        values: assets.map(a => a.name),
-      },
-      {
-        label: 'Цена',
-        values: assets.map(a => `${(typeof a.amount === 'number' ? a.amount : 0).toLocaleString('ru-RU')} ₽`),
-      },
-      {
-        label: 'Доход в месяц',
-        values: assets.map(a => `+${a.cashFlow.toLocaleString('ru-RU')} ₽`),
-      },
-    ],
-  }]
 }
 
 function getSectorColor(type: string): string {

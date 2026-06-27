@@ -1,0 +1,109 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-family: 'Montserrat Alternates', sans-serif;
+}
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  color: rgb(0, 0, 0);
+}
+
+.title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: rgb(0, 0, 0);
+}
+
+.arrow {
+  flex-shrink: 0;
+  color: rgb(0, 0, 0);
+  transition: transform 0.2s;
+}
+
+.arrowUp {
+  transform: rotate(180deg);
+}
+
+.summary {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 0 16px;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summaryLabel {
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: -0.01em;
+  color: rgba(60, 60, 67, 0.6);
+}
+
+.summaryValueGreen {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  text-align: end;
+  color: rgb(52, 199, 89);
+}
+
+.summaryValueIndigo {
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: rgb(88, 86, 214);
+  opacity: 0.8;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+}
+
+.listRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.listRow + .listRow {
+  border-top: 1px solid rgba(118, 118, 128, 0.12);
+}
+
+.listLabel {
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: rgb(0, 0, 0);
+}
+
+.listValue {
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: -0.01em;
+  color: rgb(52, 199, 89);
+}
