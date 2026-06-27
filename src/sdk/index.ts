@@ -255,3 +255,67 @@ export function applyNegativeCard(
 ): void {
   postToParent('finguru.applyNegativeCard', { roomId, playerId, cardId, amount })
 }
+
+// ─── Persistence (save/load game data) ──────────────────────────
+
+export interface PurchasedAsset {
+  cardId: number
+  type: DealType
+  name: string
+  amount: number
+  cashFlow: number
+}
+
+export interface SavedHistoryEntry {
+  playerName: string
+  playerColor: string
+  moveLabel: string
+  time: string
+  transactionType: string
+  transactionTypeColor: string
+  action: string
+  actionColor: string
+  finances: { label: string; change: string; changeColor: string; result: string; resultColor: string }[]
+  dealCard?: { title: string; description: string; price: string }
+}
+
+export interface SavedGameData {
+  assets: PurchasedAsset[]
+  moveHistory: SavedHistoryEntry[]
+}
+
+function onceMessage(type: string, timeout = 5000): Promise<any> {
+  return new Promise((resolve) => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === type) {
+        window.removeEventListener('message', handler)
+        resolve(event.data.payload)
+      }
+    }
+    window.addEventListener('message', handler)
+    setTimeout(() => {
+      window.removeEventListener('message', handler)
+      resolve(null)
+    }, timeout)
+  })
+}
+
+export function saveGameData(data: SavedGameData): void {
+  postToParent('persistence.save', { data, gameId: 'finguru', timestamp: Date.now() })
+}
+
+export function loadGameData(): Promise<SavedGameData | null> {
+  const promise = onceMessage('persistence.data')
+  postToParent('persistence.load', { gameId: 'finguru' })
+  return promise.then(payload => {
+    if (!payload) return null
+    const raw = payload.data?.data
+    if (typeof raw === 'string') {
+      try { return JSON.parse(raw) as SavedGameData }
+      catch { return null }
+    }
+    return raw as SavedGameData
+  })
+}
+
+

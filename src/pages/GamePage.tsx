@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import Dashboard from '../components/Dashboard'
+import Dashboard, { type AssetCategory } from '../components/Dashboard'
 import GameBoard from '../components/GameBoard'
 import MoveHistory from '../components/MoveHistory'
 import DiceWidget from '../components/DiceWidget'
@@ -23,6 +23,10 @@ import {
   buyDeal,
   skipDeal,
   applyNegativeCard,
+  saveGameData,
+  loadGameData,
+  type PurchasedAsset,
+  type SavedGameData,
 } from '../sdk'
 import {
   getBigDealCards,
@@ -48,6 +52,7 @@ export default function GamePage() {
   const [gameState, setGameState] = useState<GameState | null>(null)
   const [myColor, setMyColor] = useState<string>('#4CAF50')
   const [moveHistory, setMoveHistory] = useState<any[]>([])
+  const [purchasedAssets, setPurchasedAssets] = useState<PurchasedAsset[]>([])
   const [activeTab, setActiveTab] = useState<'small' | 'big'>('small')
   const [passiveIncome, setPassiveIncome] = useState(0)
 
@@ -74,6 +79,7 @@ export default function GamePage() {
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const gameStateRef = useRef<GameState | null>(null)
   const playerNameMapRef = useRef<Record<string, string>>({})
+  const isLoadedRef = useRef(false)
   gameStateRef.current = gameState
 
   useEffect(() => {
@@ -215,6 +221,21 @@ export default function GamePage() {
     return unsub
   }, [roomId])
 
+  // Load saved game data on mount
+  useEffect(() => {
+    loadGameData().then(saved => {
+      if (saved?.assets) setPurchasedAssets(saved.assets)
+      if (saved?.moveHistory) setMoveHistory(saved.moveHistory)
+      isLoadedRef.current = true
+    })
+  }, [])
+
+  // Auto-save whenever assets or move history change
+  useEffect(() => {
+    if (!isLoadedRef.current) return
+    saveGameData({ assets: purchasedAssets, moveHistory: moveHistory as SavedGameData['moveHistory'] })
+  }, [purchasedAssets, moveHistory])
+
   const handleRollRequest = useCallback((_count: number) => {
     rollDice(roomId, sdkPlayerId)
   }, [roomId, sdkPlayerId])
@@ -290,30 +311,42 @@ export default function GamePage() {
       }
     })
 
-    setMoveHistory(prev => [{
+    const dealAmount = typeof currentDealCard.amount === 'number' ? currentDealCard.amount : 0
+
+    const entry = {
       playerName: getPlayerName(result.rolledBy),
       playerColor: rolledPlayer?.color ?? '#999',
       moveLabel: currentDealType === 'big' ? 'Крупная сделка' : 'Мелкая сделка',
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
       transactionType: 'Покупка',
       transactionTypeColor: 'rgb(52, 199, 89)',
-      action: `–${currentDealCard.amount}`,
+      action: `–${dealAmount}`,
       actionColor: 'rgb(255, 59, 48)',
       finances: [{
         label: 'Наличные',
-        change: `–${currentDealCard.amount}`,
+        change: `–${dealAmount}`,
         changeColor: 'rgb(255, 59, 48)',
-        result: `${(rolledPlayer?.cash ?? 0) - (typeof currentDealCard.amount === 'number' ? currentDealCard.amount : 0)}`,
+        result: `${(rolledPlayer?.cash ?? 0) - dealAmount}`,
         resultColor: 'rgb(0, 0, 0)',
       }],
       dealCard: {
         title: currentDealCard.name,
         description: currentDealCard.description,
-        price: typeof currentDealCard.amount === 'number'
-          ? `${currentDealCard.amount.toLocaleString('ru-RU')} ₽`
-          : String(currentDealCard.amount),
+        price: `${dealAmount.toLocaleString('ru-RU')} ₽`,
       },
-    }, ...prev])
+    }
+
+    setMoveHistory(prev => [entry, ...prev])
+    setPurchasedAssets(prev => {
+      const newAssets = [...prev, {
+        cardId: currentDealCard.id,
+        type: currentDealType,
+        name: currentDealCard.name,
+        amount: dealAmount,
+        cashFlow: cashFlowAmount,
+      }]
+      return newAssets
+    })
 
     buyDeal(roomId, sdkPlayerId, currentDealCard.id, currentDealType)
     setShowDealCard(false)
@@ -465,7 +498,7 @@ export default function GamePage() {
           goalTarget={dashboardPlayer.expenses}
           progressAmount={me?.passiveIncome ?? passiveIncome}
           statuses={[]}
-          assetCategories={[]}
+          assetCategories={buildAssetCategories(purchasedAssets)}
           icon={icons[`/src/assets/roles/${roleName}.svg`]}
         />
       </div>
@@ -628,6 +661,33 @@ export default function GamePage() {
       )}
     </div>
   )
+}
+
+function buildAssetCategories(assets: PurchasedAsset[]): AssetCategory[] {
+  if (assets.length === 0) return []
+  const totalValue = assets.reduce((sum, a) => sum + (typeof a.amount === 'number' ? a.amount : 0), 0)
+  return [{
+    title: 'Активы',
+    summary: {
+      count: `${assets.length} шт`,
+      totalValue: `${totalValue.toLocaleString('ru-RU')} ₽`,
+    },
+    itemCount: assets.length,
+    rows: [
+      {
+        label: 'Название',
+        values: assets.map(a => a.name),
+      },
+      {
+        label: 'Цена',
+        values: assets.map(a => `${(typeof a.amount === 'number' ? a.amount : 0).toLocaleString('ru-RU')} ₽`),
+      },
+      {
+        label: 'Доход в месяц',
+        values: assets.map(a => `+${a.cashFlow.toLocaleString('ru-RU')} ₽`),
+      },
+    ],
+  }]
 }
 
 function getSectorColor(type: string): string {
