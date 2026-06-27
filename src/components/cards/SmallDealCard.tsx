@@ -46,7 +46,7 @@ export default function SmallDealCard({ name, description, amount, details, onCl
 
   return (
     <div className={styles.overlay} onClick={purchased ? onFinishTurn : onClose}>
-      <div className={styles.card} onClick={(e) => e.stopPropagation()}>
+      <div className={`${styles.card}${!purchased && tab === 'actions' ? ` ${styles.cardActions}` : ''}`} onClick={(e) => e.stopPropagation()}>
         {purchased ? (
           <div className={styles.purchasedOverlay}>
             <p className={styles.purchasedLabel}>Вы купили</p>
