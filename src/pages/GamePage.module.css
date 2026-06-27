@@ -90,6 +90,29 @@
   box-shadow: 0 4px 12px rgba(88, 86, 214, 0.4);
 }
 
+.turnBanner {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: rgba(60, 60, 67, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 40px;
+  padding: 14px 48px;
+  font-family: 'Montserrat Alternates', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  letter-spacing: 0.3px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 @media (max-width: 1024px) {
   .gamePage {
     grid-template-columns: 1fr;

@@ -475,6 +475,7 @@ export default function GamePage() {
   }, [negativeCard, roomId, sdkPlayerId])
 
   const isMyTurn = gameState?.currentPlayerId === sdkPlayerId
+  const currentTurnPlayer = gameState?.players.find(p => p.playerId === gameState.currentPlayerId)
 
   if (roleLoading) return <p>Загрузка...</p>
   if (!serverRole) return <p>Роль не найдена</p>
@@ -580,10 +581,16 @@ export default function GamePage() {
         <MoveHistory title="История ходов" entries={moveHistory} />
       </div>
 
-      {isMyTurn && !isAnimatingRef.current && (
-        <button className={styles.rollFab} onClick={() => setShowDice(true)}>
-          Бросить кубик
-        </button>
+      {!isAnimatingRef.current && (
+        isMyTurn ? (
+          <button className={styles.rollFab} onClick={() => setShowDice(true)}>
+            Бросить кубик
+          </button>
+        ) : currentTurnPlayer && (
+          <div className={styles.turnBanner}>
+            Сейчас ходит {currentTurnPlayer.displayName}
+          </div>
+        )
       )}
 
       {showDice && (
