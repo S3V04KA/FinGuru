@@ -48,6 +48,16 @@ export interface NegativeCardDto {
   name: string
   description: string
   amount: number
+  expense?: number
+  condition?: string
+  type?: string
+  cardId?: string
+  rules?: string
+  affects?: string
+  cashEffect?: string
+  cashFlowEffect?: string
+  assetsEffect?: string
+  liabilitiesEffect?: string
 }
 
 export function getNegativeCards(): Promise<NegativeCardDto[]> {
