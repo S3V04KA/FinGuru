@@ -49,6 +49,7 @@ export default function GamePage() {
   const [myColor, setMyColor] = useState<string>('#4CAF50')
   const [moveHistory, setMoveHistory] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState<'small' | 'big'>('small')
+  const [passiveIncome, setPassiveIncome] = useState(0)
 
   const [showDice, setShowDice] = useState(false)
 
@@ -72,6 +73,7 @@ export default function GamePage() {
   const pendingDealRef = useRef<DiceRollResult | null>(null)
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
   const gameStateRef = useRef<GameState | null>(null)
+  const playerNameMapRef = useRef<Record<string, string>>({})
   gameStateRef.current = gameState
 
   useEffect(() => {
@@ -86,31 +88,63 @@ export default function GamePage() {
     timersRef.current = []
   }
 
+  function getPlayerName(playerId: string): string {
+    return playerNameMapRef.current[playerId] ?? playerId
+  }
+
   const applyResult = useCallback((result: DiceRollResult) => {
+    // Update player name map
+    for (const p of result.players) {
+      playerNameMapRef.current[p.playerId] = p.displayName
+    }
+
+    // Calculate actual cash change (parent may send 0 for salary)
+    let cashChange = result.cashChange
+    let newCash = result.newCash
+    if (result.sectorType === 'salary') {
+      const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
+      if (rolledPlayer) {
+        cashChange = rolledPlayer.income
+        newCash = rolledPlayer.cash + rolledPlayer.income
+      }
+    }
+
     setGameState(prev => {
       if (!prev) return prev
+      const mergedPlayers = result.players.map(p => {
+        const localP = prev.players.find(lp => lp.playerId === p.playerId)
+        const updatedP = {
+          ...p,
+          passiveIncome: localP?.passiveIncome ?? p.passiveIncome ?? 0,
+        }
+        // Apply salary locally if needed
+        if (result.sectorType === 'salary' && p.playerId === result.rolledBy) {
+          updatedP.cash = newCash
+        }
+        return updatedP
+      })
       return {
         ...prev,
-        players: result.players,
+        players: mergedPlayers,
         currentRound: result.currentRound,
         currentPlayerId: result.nextPlayerId,
       }
     })
     const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
     setMoveHistory(prev => [{
-      playerName: rolledPlayer?.displayName ?? result.rolledBy,
+      playerName: getPlayerName(result.rolledBy),
       playerColor: rolledPlayer?.color ?? '#999',
-      moveLabel: `Ход ${result.total}`,
+      moveLabel: `Ход ${result.currentRound}`,
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
       transactionType: result.sectorLabel,
       transactionTypeColor: getSectorColor(result.sectorType),
-      action: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
-      actionColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
+      action: cashChange >= 0 ? `+${cashChange}` : `${cashChange}`,
+      actionColor: cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
       finances: [{
         label: 'Наличные',
-        change: result.cashChange >= 0 ? `+${result.cashChange}` : `${result.cashChange}`,
-        changeColor: result.cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
-        result: `${result.newCash}`,
+        change: cashChange >= 0 ? `+${cashChange}` : `${cashChange}`,
+        changeColor: cashChange >= 0 ? 'rgb(52, 199, 89)' : 'rgb(255, 59, 48)',
+        result: `${newCash}`,
         resultColor: 'rgb(0, 0, 0)',
       }],
     }, ...prev])
@@ -120,6 +154,9 @@ export default function GamePage() {
     if (!roomId) return
     getGameState(roomId).then(state => {
       if (state) {
+        for (const p of state.players) {
+          playerNameMapRef.current[p.playerId] = p.displayName
+        }
         setGameState(state)
         const me = state.players.find(p => p.playerId === sdkPlayerId)
         if (me) setMyColor(me.color)
@@ -232,8 +269,29 @@ export default function GamePage() {
     const result = pendingDealRef.current
     const rolledPlayer = result.players.find(p => p.playerId === result.rolledBy)
 
+    // Find cash flow from deal card details
+    const cashFlowDetail = currentDealCard.details.find(
+      d => !d.negative && (d.name === 'Денежный поток' || d.name.includes('Доход'))
+    )
+    const cashFlowAmount = typeof cashFlowDetail?.amount === 'number' ? cashFlowDetail.amount : 0
+
+    // Update passive income locally
+    const newPassiveIncome = myPassiveIncome + cashFlowAmount
+    setPassiveIncome(newPassiveIncome)
+    setGameState(prev => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        players: prev.players.map(p =>
+          p.playerId === result.rolledBy
+            ? { ...p, passiveIncome: newPassiveIncome }
+            : p
+        ),
+      }
+    })
+
     setMoveHistory(prev => [{
-      playerName: rolledPlayer?.displayName ?? result.rolledBy,
+      playerName: getPlayerName(result.rolledBy),
       playerColor: rolledPlayer?.color ?? '#999',
       moveLabel: currentDealType === 'big' ? 'Крупная сделка' : 'Мелкая сделка',
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
@@ -261,7 +319,7 @@ export default function GamePage() {
     setShowDealCard(false)
     setCurrentDealCard(null)
     pendingDealRef.current = null
-  }, [currentDealCard, currentDealType, roomId, sdkPlayerId])
+  }, [currentDealCard, currentDealType, roomId, sdkPlayerId, myPassiveIncome])
 
   const handleDealSkip = useCallback(() => {
     skipDeal(roomId, sdkPlayerId)
@@ -308,7 +366,7 @@ export default function GamePage() {
 
     // Record move in history
     setMoveHistory(prev => [{
-      playerName: rolledPlayer?.displayName ?? result.rolledBy,
+      playerName: getPlayerName(result.rolledBy),
       playerColor: rolledPlayer?.color ?? '#999',
       moveLabel: 'Всячина',
       time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
@@ -344,6 +402,8 @@ export default function GamePage() {
   const myDream = me?.dreamId != null ? defaultDreams.find(d => d.id === me.dreamId) : null
   const myPosition = animPos !== null ? animPos : (me?.position ?? 0)
 
+  const myPassiveIncome = me?.passiveIncome ?? passiveIncome
+
   const dashboardPlayer = me ?? {
     playerId: sdkPlayerId,
     displayName: data.name,
@@ -353,14 +413,13 @@ export default function GamePage() {
     cash: 0,
     income: data.financialData.income.total,
     expenses: data.financialData.expenses.total,
+    passiveIncome: 0,
     position: myPosition,
     skipNextTurn: false,
   }
 
-  function reachedBigCircle(p: { dreamId: number | null; cash: number }): boolean {
-    if (p.dreamId == null) return false
-    const dream = defaultDreams.find(d => d.id === p.dreamId)
-    return dream ? p.cash >= dream.price : false
+  function reachedBigCircle(p: { passiveIncome?: number; expenses: number }): boolean {
+    return (p.passiveIncome ?? 0) > p.expenses
   }
 
   const smallCirclePlayers = (gameState?.players ?? [])
@@ -402,11 +461,11 @@ export default function GamePage() {
             cash: dashboardPlayer.cash,
             salary: dashboardPlayer.income,
             expenses: dashboardPlayer.expenses,
-            passiveIncome: 0,
+            passiveIncome: myPassiveIncome,
             cashFlow: dashboardPlayer.income - dashboardPlayer.expenses,
           }}
-          goalTarget={myDream?.price ?? 0}
-          progressAmount={dashboardPlayer.cash}
+          goalTarget={dashboardPlayer.expenses}
+          progressAmount={myPassiveIncome}
           statuses={[]}
           assetCategories={[]}
           icon={icons[`/src/assets/roles/${roleName}.svg`]}

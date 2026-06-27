@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_PERSISTENCE_URL ?? 'http://localhost:5013'
+const API_BASE = import.meta.env.VITE_PERSISTENCE_URL ?? ''
 
 export interface CardDetailDto {
   name: string

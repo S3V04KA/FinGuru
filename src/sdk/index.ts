@@ -122,6 +122,7 @@ export interface PlayerGameState {
   cash: number
   income: number
   expenses: number
+  passiveIncome?: number
   position: number
   skipNextTurn: boolean
 }
