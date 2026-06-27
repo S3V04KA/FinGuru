@@ -118,7 +118,7 @@
 .colPassive {
   width: 90px;
   flex-shrink: 0;
-  text-align: right;
+  text-align: center;
   font-weight: 600;
   font-size: 13px;
   color: rgb(88, 86, 214);
@@ -127,7 +127,7 @@
 .colCost {
   width: 90px;
   flex-shrink: 0;
-  text-align: right;
+  text-align: center;
   font-weight: 600;
   font-size: 13px;
   color: rgb(52, 199, 89);
