@@ -215,7 +215,7 @@ export default function GamePage() {
             if (result.sectorType === 'deal') {
               pendingDealRef.current = result
               setShowDealSelection(true)
-            } else if (result.sectorType === 'negative') {
+            } else if (result.sectorType === 'misc') {
               pendingDealRef.current = result
               fetchNegativeCard()
             }
